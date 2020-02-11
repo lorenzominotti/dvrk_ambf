@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/coltrane/ambf/external/bullet/src/clew/clew.c
+clew.h
+/home/coltrane/ambf/external/bullet/src/clew/clew.h
+windows.h
+-
+dlfcn.h
+-
+stdlib.h
+-
+
+/home/coltrane/ambf/external/bullet/src/clew/clew.h
+AvailabilityMacros.h
+-
+stdint.h
+-
+stddef.h
+-
+altivec.h
+-
+intrin.h
+-
+xmmintrin.h
+-
+intrin.h
+-
+emmintrin.h
+-
+mmintrin.h
+-
+intrin.h
+-
+immintrin.h
+-
+

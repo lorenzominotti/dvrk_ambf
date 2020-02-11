@@ -1,0 +1,181 @@
+input devices: [
+  MTMR,
+  MTML,
+  Geomagic Touch,
+  Razer Hydra0,
+  Razer Hydra1,
+  Novint Falcon1,
+  Novint Falcon2,
+  Omega7]
+
+
+MTML:
+    hardware name: MTML
+    haptic gain: {linear: 0.03, angular: 0.0}
+    workspace scaling: 5
+    simulated multibody: "../multi-bodies/grippers/pr2 gripper small red.yaml"
+    location: {
+      position: {x: -0.5, y: 0.0, z: 0},
+      orientation: {r: 0, p: 0.0, y: 0}}
+    button mapping: {
+      a1: 1,
+      a2: 6,
+      next mode: 3,
+      prev mode: 4}
+# visible: True
+# visible size: 0.005
+
+MTMR:
+  hardware name: MTMR
+  haptic gain: {linear: 0.03, angular: 1}
+  workspace scaling: 5
+  simulated multibody: "../multi-bodies/grippers/pr2 gripper small red.yaml"
+# root link:
+  location: {
+    position: {x: -0.5, y: 0, z: 0},
+    orientation: {r: 0, p: 0, y: 0}}
+  button mapping: {
+    a1: 1,
+    a2: 2,
+    next mode: 3,
+    prev mode: 4}
+
+
+Geomagic Touch:
+    hardware name: PHANTOM Omni
+    haptic gain: {linear: 0.000, angular: 0.0}
+    deadband: 0.01
+    max force: 2
+    max jerk: 0.2
+    workspace scaling: 10
+    simulated multibody: "../multi-bodies/grippers/resistive/sensorized_box/gripper.yaml"
+    location: {
+      position: {x: 0.0, y: 0.5, z: 0.0},
+      orientation: {r: 0, p: 0, y: 0}}
+    button mapping: {
+      a1: 0,
+      a2: -1,
+      g1: 1,
+      next mode: 2,
+      prev mode: 3}
+# visible: True
+# visible size: 0.005
+
+Razer Hydra0:
+    hardware name: Razer Hydra
+    haptic gain: {linear: 10.0, angular: 0.0}
+# controller gain: {
+#   linear: {P: 0.0, D: 0.0},
+#   angular: {P: 0.0, D: 0.0}}
+    workspace scaling: 5
+    simulated multibody: "../multi-bodies/grippers/pr2 gripper.yaml"
+# root link: "/ambf/env/BODY l_wrist_roll_link"
+    location: {
+      position: {x: 0.0, y: -1.0, z: 0},
+      orientation: {r: 0.0, p: 0.0, y: 0.0}}
+    # orientation offset: {r: 0.0, p: 0.0, y: 0}
+    button mapping: {
+      a1: 0,
+      a2: 1,
+      next mode: 2,
+      prev mode: 3}
+# visible: True
+# visible size: 0.005
+
+Razer Hydra1:
+    hardware name: Razer Hydra
+    haptic gain: {linear: 10.0, angular: 0.0}
+    workspace scaling: 5
+    simulated multibody: "../multi-bodies/grippers/pr2 gripper.yaml"
+# root link: "/ambf/env/BODY r_wrist_roll_link"
+    location: {
+      position: {x: 0.0, y: 0.5, z: 0},
+      orientation: {r: 0, p: 0, y: 0}}
+# orientation offset: {r: 0.0, p: 0.0, y: 0}
+    button mapping: {
+      a1: 0,
+      a2: 1,
+      next mode: 2,
+      prev mode: 3}
+# visible: True
+# visible size: 0.005
+
+Novint Falcon1:
+    hardware name: Falcon
+    haptic gain: {linear: 0.5, angular: 0.0}
+    deadband: 0.01
+    max force: 10
+    workspace scaling: 10
+    simulated multibody: "../multi-bodies/grippers/pr2 gripper.yaml"
+    location: {
+      position: {x: 0.0, y: 0.5, z: 0.0},
+      orientation: {r: 0, p: 0, y: 0}}
+
+    button mapping: {
+      a1: 0,
+      a2: 2,
+      next mode: 3,
+      prev mode: 1}
+# visible: True
+# visible size: 0.005
+
+Novint Falcon2:
+    hardware name: Falcon
+    haptic gain: {linear: 0.5, angular: 0.0}
+    deadband: 0.01
+    max force: 10
+    workspace scaling: 10
+    simulated multibody: "../multi-bodies/grippers/pr2 gripper.yaml"
+    location: {
+      position: {x: 0.0, y: -0.5, z: 0.0},
+      orientation: {r: 0, p: 0, y: 0}}
+
+    button mapping: {
+      a1: 0,
+      a2: 2,
+      next mode: 3,
+      prev mode: 1}
+# visible: True
+# visible size: 0.005
+
+Omega7:
+    hardware name: omega.7
+    haptic gain: {linear: 0.03, angular: 0.0}
+    deadband: 0.01
+#    workspace scaling: 25 #with gripper
+    workspace scaling: 5  #with PSM
+    enable joint control: true
+#    simulated multibody: "../multi-bodies/grippers/pr2 gripper.yaml"         #the one I usually use
+#    simulated multibody: "../multi-bodies/grippers/pr2 gripper small.yaml"
+#    simulated multibody: "../multi-bodies/robots/blender-psm.yaml"
+#    simulated multibody: "../multi-bodies/robots/blender-psm_inputDevice.yaml"
+#    simulated multibody: "../multi-bodies/robots/blender-psm.yaml"
+#    simulated multibody: "../multi-bodies/robots/gripper_psm.yaml"
+    simulated multibody: "../multi-bodies/robots/blender-psm-springy.yaml"
+    root link: "/ambf/env/psm/BODY tool roll link"
+#    root link: "/ambf/env/psm/BODY tool roll link"
+#    root link: "/ambf/env/psm/BODY tool pitch link"
+#    root link: "/ambf/env/psm/BODY base link"
+#    root link: "/ambf/env/psm/BODY tool yaw link"
+    location: {
+#position: {x: -0.5, y: 0.0, z: 0},
+#position: {x: 0.019, y: 0.0, z: -0.074}, #calibration
+#     position: {x: 0.019, y: 0.0, z: 0.5},
+#     orientation: {p: 0.0, r: 0.0, y: 0.0}}
+#position: {x: 0.0, y: -0.5, z: -0.7}, cheese ok
+#position: {x: 0.0, y: -0.5, z: -0.0}, cloth ok
+#position: {x: 0.499, y: 0.514, z: -0.684},          # it was -0.684 tool roll link  
+#orientation: {p: -3.141, r: 0.001, y: -0.002}}
+#position: {x: 0.5, y: 1.0, z: -0.7},                #base link   
+#orientation: {p: -0.0, r: 0.0, y: 3.14}}
+#position: {x: 0.499, y: 0.514, z: 0.184},       #tool gripper1 link   
+#orientation: {r: -0.001, p: -3.141, y: 1.567}}   
+#    orientation: {p: -0.0, r: 0.0, y: 3.14},  #base link
+#    position: {x: 0.5, y: 0.1, z: -0.15}}
+    orientation: {p: 0.001, r: -1.571, y: 1.569},  #tool yaw link
+    position: {x: 0.499, y: 0.514, z: -0.693}}
+    max force: 12
+    
+      
+
+   

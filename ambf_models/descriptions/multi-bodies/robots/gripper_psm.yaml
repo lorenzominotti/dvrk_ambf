@@ -1,0 +1,160 @@
+bodies: [BODY tool roll link, BODY tool pitch
+    link, BODY tool yaw link, BODY tool gripper1 link, BODY tool gripper2 link]
+joints: [JOINT tool roll link-tool pitch link, JOINT tool pitch link-tool yaw link, JOINT tool yaw
+    link-tool gripper1 link, JOINT tool yaw link-tool gripper2 link]
+high resolution path: ../../../meshes/blender_afmb/psm/high_res/
+low resolution path: ../../../meshes/blender_afmb/psm/low_res/
+ignore inter-collision: true
+namespace: /ambf/env/psm/
+BODY tool roll link:
+  name: tool roll link
+  mesh: tool roll link.STL
+  mass: 0.001
+  collision margin: 0.001
+  scale: 1.0
+  location:
+    orientation: {p: -3.141, r: 0.001, y: -0.002}
+    position: {x: 0.499, y: 0.514, z: -0.684}
+  inertial offset:
+    orientation: {p: 0, r: 0, y: 0}
+    position: {x: 0.0, y: -0.0, z: -0.004}
+  friction: {rolling: 0.01, static: 0.5}
+  damping: {angular: 0.9, linear: 0.9}
+  restitution: 0
+  collision groups: [0]
+  color components:
+    ambient: {level: 1.0}
+    diffuse: {b: 0.9373, g: 0.8235, r: 0.7961}
+    specular: {b: 1.0, g: 1.0, r: 1.0}
+    transparency: 1.0
+BODY tool pitch link:
+  name: tool pitch link
+  mesh: tool pitch link.STL
+  mass: 0.001
+  collision margin: 0.001
+  scale: 1.0
+  location:
+    orientation: {p: 1.572, r: -0.001, y: 1.567}
+    position: {x: 0.499, y: 0.514, z: -0.684}
+  inertial offset:
+    orientation: {p: 0, r: 0, y: 0}
+    position: {x: 0.004, y: -0.0, z: 0.0}
+  friction: {rolling: 0.01, static: 0.5}
+  damping: {angular: 0.9, linear: 0.9}
+  restitution: 0
+  collision groups: [0]
+  color components:
+    ambient: {level: 1.0}
+    diffuse: {b: 0.9373, g: 0.8235, r: 0.7961}
+    specular: {b: 1.0, g: 1.0, r: 1.0}
+    transparency: 1.0
+BODY tool yaw link:
+  name: tool yaw link
+  mesh: tool yaw link.STL
+  mass: 0.001
+  collision margin: 0.001
+  scale: 1.0
+  location:
+    orientation: {p: 0.001, r: -1.571, y: 1.569}
+    position: {x: 0.499, y: 0.514, z: -0.693}
+  inertial offset:
+    orientation: {p: 0, r: 0, y: 0}
+    position: {x: 0.0, y: -0.0, z: -0.0}
+  friction: {rolling: 0.01, static: 0.5}
+  damping: {angular: 0.9, linear: 0.9}
+  restitution: 0
+  collision groups: [0]
+  color components:
+    ambient: {level: 1.0}
+    diffuse: {b: 0.9373, g: 0.8235, r: 0.7961}
+    specular: {b: 1.0, g: 1.0, r: 1.0}
+    transparency: 1.0
+BODY tool gripper1 link:
+  name: tool gripper1 link
+  mesh: tool gripper1 link.STL
+  mass: 0.001
+  collision margin: 0.001
+  scale: 1.0
+  location:
+    orientation: {p: 0.001, r: -1.571, y: 1.569}
+    position: {x: 0.499, y: 0.514, z: -0.693}
+  inertial offset:
+    orientation: {p: 0, r: 0, y: 0}
+    position: {x: -0.0, y: 0.004, z: -0.001}
+  friction: {rolling: 0.01, static: 0.5}
+  damping: {angular: 0.9, linear: 0.9}
+  restitution: 0
+  collision groups: [0]
+  color components:
+    ambient: {level: 1.0}
+    diffuse: {b: 0.9373, g: 0.8235, r: 0.7961}
+    specular: {b: 1.0, g: 1.0, r: 1.0}
+    transparency: 1.0
+BODY tool gripper2 link:
+  name: tool gripper2 link
+  mesh: tool gripper2 link.STL
+  mass: 0.001
+  collision margin: 0.001
+  scale: 1.0
+  location:
+    orientation: {p: 0.001, r: -1.571, y: 1.569}
+    position: {x: 0.499, y: 0.514, z: -0.693}
+  inertial offset:
+    orientation: {p: 0, r: 0, y: 0}
+    position: {x: 0.0, y: 0.004, z: 0.001}
+  friction: {rolling: 0.01, static: 0.5}
+  damping: {angular: 0.9, linear: 0.9}
+  restitution: 0
+  collision groups: [0]
+  color components:
+    ambient: {level: 1.0}
+    diffuse: {b: 0.9373, g: 0.8235, r: 0.7961}
+    specular: {b: 1.0, g: 1.0, r: 1.0}
+    transparency: 1.0
+JOINT tool roll link-tool pitch link:
+  name: tool roll link-tool pitch link
+  parent: BODY tool roll link
+  child: BODY tool pitch link
+  parent axis: {x: -0.0, y: 1.0, z: 0.0}
+  parent pivot: {x: 0.0, y: -0.0, z: -0.0}
+  child axis: {x: 0.0, y: 0.0, z: 1.0}
+  child pivot: {x: 0.0, y: 0.0, z: 0.0}
+  joint limits: {high: 1.571, low: -1.571}
+  controller: {D: 0.004, I: 0, P: 2.0}
+  type: revolute
+  offset: -1.571
+JOINT tool pitch link-tool yaw link:
+  name: tool pitch link-tool yaw link
+  parent: BODY tool pitch link
+  child: BODY tool yaw link
+  parent axis: {x: -0.0, y: 1.0, z: -0.0}
+  parent pivot: {x: 0.009, y: -0.0, z: -0.0}
+  child axis: {x: 0.0, y: 0.0, z: 1.0}
+  child pivot: {x: 0.0, y: 0.0, z: 0.0}
+  joint limits: {high: 1.571, low: -1.571}
+  controller: {D: 0.004, I: 0, P: 2.0}
+  type: revolute
+  offset: -1.571
+JOINT tool yaw link-tool gripper1 link:
+  name: tool yaw link-tool gripper1 link
+  parent: BODY tool yaw link
+  child: BODY tool gripper1 link
+  parent axis: {x: 0.0, y: -0.0, z: 1.0}
+  parent pivot: {x: -0.0, y: -0.0, z: 0.0}
+  child axis: {x: 0.0, y: 0.0, z: 1.0}
+  child pivot: {x: 0.0, y: 0.0, z: 0.0}
+  joint limits: {high: 1.0, low: 0.0}
+  controller: {D: 0.004, I: 0, P: 2.0}
+  type: revolute
+JOINT tool yaw link-tool gripper2 link:
+  name: tool yaw link-tool gripper2 link
+  parent: BODY tool yaw link
+  child: BODY tool gripper2 link
+  parent axis: {x: 0.0, y: -0.0, z: 1.0}
+  parent pivot: {x: -0.0, y: -0.0, z: 0.0}
+  child axis: {x: 0.0, y: 0.0, z: 1.0}
+  child pivot: {x: 0.0, y: 0.0, z: 0.0}
+  joint limits: {high: 1.0, low: 0.0}
+  controller: {D: 0.004, I: 0, P: 2.0}
+  type: revolute
+

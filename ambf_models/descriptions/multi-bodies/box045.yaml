@@ -1,0 +1,30 @@
+bodies: [BodyA]
+#sensors: [SENSOR Proximity0]
+high resolution path: ../../meshes/blender_afmb/box/high_res/
+low resolution path: ../../meshes/blender_afmb/box/low_res/
+ignore inter-collision: false
+namespace: /ambf/env/
+SENSOR Proximity0:
+  name: Proximity
+  type: Proximity
+#  location: {x: -0.14, y: 0.0, z: 0.0}
+#  direction: {x: -1.0, y: 0.0, z: 0.0}
+  location:
+    orientation: {p: -0.0, r: 0.0, y: 0.0}
+#    position: {x: 0.5, y: 0.0, z: 4.0}
+  range: 1.105
+  parent: /ambf/env/BodyA
+BodyA:
+  name: box01
+  mesh: box.stl
+  mass: 2.0
+  collision margin: 0.001
+  location:
+#    position: {x: 0.499, y: 0.214, z: 0.184}       
+#    orientation: {r: -0.001, p: -3.141, y: 2.567}
+    orientation: {p: 0.001, r: -1.571, y: 1.569}
+#    position: {x: 0.499, y: 0.514, z: -0.693} #02 ros
+    position: {x: 0.499, y: -0.45, z: -0.693}
+#orientation: {r: -1.001, p: -0.191, y: 2.217}
+  color: green
+
