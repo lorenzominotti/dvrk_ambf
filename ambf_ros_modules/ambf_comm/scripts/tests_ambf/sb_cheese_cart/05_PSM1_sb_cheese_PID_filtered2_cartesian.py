@@ -36,16 +36,16 @@ psm_handle_tpl = _client.get_obj_handle('psm/toolpitchlink')
 psm_handle_tyl = _client.get_obj_handle('psm/toolyawlink')
 psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
-def butter_lowpass_filter(data, cutoff, fs, order):
+#def butter_lowpass_filter(data, cutoff, fs, order):
 	
-	nyq = 0.5*fs
-	normal_cutoff = cutoff / nyq
+	#nyq = 0.5*fs
+	#normal_cutoff = cutoff / nyq
 	#normal_cutoff = cutoff / nyq
 	#normal_cutoff = cutoff / nyq
     # Get the filter coefficients
-	b, a = butter(order, normal_cutoff, btype='low', analog=False)
-	y = filtfilt(b, a, data)
-	return y
+	#b, a = butter(order, normal_cutoff, btype='low', analog=False)
+	#y = filtfilt(b, a, data)
+	#return y
 
 def reach_pos_XY(goal_x, goal_y, start):
 	global Kp, Ki
@@ -120,17 +120,18 @@ def reach_pos_XY(goal_x, goal_y, start):
 		count = count + 1
 		if count < window_size + 1:
 			window = np.append(window, force_raw_now)
-			force2 = force_raw_now
+			force = force_raw_now
 		else:
 			for i in range(1, window_size):
 				window[i-1] = window[i]
 				if i == (window_size - 1):
 					window[i] = force_raw_now
 				sum = sum + window[i-1]
-			force2 = sum / window_size
+			force = sum / window_size
 			sum = 0
 
 		###########################################################################################
+		'''
 		count1 = count1 + 1
 		if count1 < window_size + 1:
 			window = np.append(window, force2)
@@ -143,6 +144,7 @@ def reach_pos_XY(goal_x, goal_y, start):
 				sum = sum + window[i-1]
 			force = sum / window_size
 			sum = 0
+		'''
 		###########################################################################################
 
 		error = force_const - force
@@ -161,7 +163,7 @@ def reach_pos_XY(goal_x, goal_y, start):
     	
 		psm_handle_pel.set_joint_pos(0, m)
 	
-		print(px-posx_start, py-posy_start)
+		print(px-posx_start0, py-posy_start0)
 		if target_x >= posx_start:
 			if target_x > px:
 				degree_base = degree_base - dx
@@ -347,57 +349,57 @@ while m < limit_mi:
 	posY =  pos.y
 
 print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
+'''
 reach_pos_XY(-0.12, 0.05, True)
 print('STEP1')
 time.sleep(2)
-reach_pos_XY(0.05, 0.10, False)
-print('STEP2')
-time.sleep(2)
+#reach_pos_XY(0.05, 0.10, False)
+#print('STEP2')
+#time.sleep(2)
 reach_pos_XY(0.00, 0.00, False)
 print('STEP3')
 time.sleep(5)
 '''
 reach_pos_XY(-0.05, 0.0, True)
 print('STEP1')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(-0.03, 0.04, False)
 print('STEP2')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(-0.02, 0.0458, False)
 print('STEP3')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.0, 0.05, False)
 print('STEP4')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.02, 0.0458, False)
 print('STEP5')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.03, 0.04, False)
 print('STEP6')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.05, 0.0, False)
 print('STEP7')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.03, -0.04, False)
 print('STEP8')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.02, -0.0458, False)
 print('STEP9')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(0.0, -0.05, False)
 print('STEP10')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(-0.02, -0.0458, False)
 print('STEP11')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(-0.03, -0.04, False)
 print('STEP12')
-time.sleep(0.1)
+time.sleep(0.5)
 reach_pos_XY(-0.05, 0.0, False)
 print('STEP13')
 time.sleep(5)
-'''
+
 print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
 
 '''
