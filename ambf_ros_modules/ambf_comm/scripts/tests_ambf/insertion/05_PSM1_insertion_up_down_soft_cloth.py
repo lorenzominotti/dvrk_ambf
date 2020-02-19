@@ -107,7 +107,7 @@ graph_Ival = 0
 graph_Dval = 0
 
 #force_const_max = 5
-force_const_max = 5
+force_const_max = 2
 force_const_min = 0.5
 Kp = 0.005
 Ki = 0.0005
@@ -191,7 +191,7 @@ while m > limit_mi_2:
 	graph_Dval = np.append(graph_Dval, D_value)
 	graph_m = np.append(graph_m, m)
 
-time.sleep(0.2)
+time.sleep(1)
 while m < limit_mi:
 
 	force = psm_handle_mi.get_force()
@@ -269,7 +269,7 @@ while m > limit_mi_2:
 	graph_Ival = np.append(graph_Ival, I_value)
 	graph_Dval = np.append(graph_Dval, D_value)
 	graph_m = np.append(graph_m, m)
-time.sleep(0.2)
+time.sleep(1)
 
 while m < limit_mi:
 
@@ -311,7 +311,7 @@ while m < limit_mi:
 	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
 	#graph = np.append(graph,maF[5])
 print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-time.sleep(0.2)
+time.sleep(1)
 
 limit_mi_2 = 0.09
 while m > limit_mi_2:

@@ -69,7 +69,7 @@ time.sleep(1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
 time.sleep(1)
-m = 0.17
+m = 0.18
 psm_handle_pel.set_joint_pos(0, m)
 time.sleep(1)
 #psm_handle_pel.set_joint_pos(0, math.radians(40))
@@ -272,7 +272,7 @@ while degree < 20:
 	time.sleep(f_inv)	
 	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
 	#graph = np.append(graph,maF[5])
-'''
+
 count = 0
 #window_size = 100
 sum = 0
@@ -349,7 +349,7 @@ while degree > (0):
 	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
 	#graph = np.append(graph,maF[5])
 
-
+'''
 while degree < 20:
 
 	psm_handle_pfl.set_joint_pos(0, math.radians(-degree))

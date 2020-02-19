@@ -211,23 +211,7 @@ while degree < 20:
 	#if force < (force_const - band):
 	    #m = m - PID * m
 	psm_handle_pel.set_joint_pos(0, m)
-	'''
-	if abs(force-force_const) > 1.5:
-		k_corr = 4
-	if abs(force-force_const) > 1 and abs(force-force_const) < 1.5:
-		k_corr = 3
-	if abs(force-force_const) > 0.8 and abs(force-force_const) < 1:
-		k_corr = 2
-	if abs(force-force_const) > 0.6 and abs(force-force_const) < 0.8:
-		k_corr = 1
 
-	if force > (force_const + band2):
-		m = m - k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	if force < (force_const - band):
-		m = m + k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	'''
 	#if (force < (force_const + band2)) and (force > (force_const - band2)):
 		#degree = degree + delta_degree
 	degree = degree + delta_degree

@@ -283,7 +283,7 @@ time.sleep(1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
 time.sleep(1)
-m = 0.18
+m = 0.16
 psm_handle_pel.set_joint_pos(0, m)
 time.sleep(1)
 print(psm_handle_trl.get_pos())
@@ -305,6 +305,7 @@ force_vec = []
 degree = 0
 delta = 0.6 
 delta_m = 0.00005
+delta_m_start = 0.0005
 band = 0.03
 limit_mi = 0.30
 
@@ -324,15 +325,18 @@ graph_posY = []
 posx_start0 = 0
 posy_start0 = 0
 
-force_const = 3
+force_const = 6
 
 '''
-good but with oscillations:
+circle:
 Kp = 0.002
-Ki = 0.00007 or Ki = 0.0001 better
+Ki = 0.0001 
 '''
-Kp = 0.002
-Ki = 0.0001
+Kp = 0.0005
+#Ki = 0.0001
+Ki = 0.00001
+Kd = 0.00008
+#Ki = 0.0001
 #Kd = 0.00005
 Integrator = 0
 Derivator = 0
@@ -351,15 +355,15 @@ while m < limit_mi:
 		print('\n')
 
 	if force > (force_const + band):
-		m = m - delta_m/2
+		m = m - delta_m_start/2
 		psm_handle_pel.set_joint_pos(0, m)
 	if force < (force_const - band):
-	    m = m + delta_m/2
+	    m = m + delta_m_start/2
 	    psm_handle_pel.set_joint_pos(0, m)
 
 	if (force < (force_const + band)) and (force > (force_const - band)):
 		count_mi_loop = count_mi_loop + 1
-	if count_mi_loop == 50:
+	if count_mi_loop == 10:
 		break
 	
 	psm_handle_pel.set_joint_pos(0, m)
@@ -393,7 +397,7 @@ time.sleep(2)
 #reach_pos_XY(0.05, 0.10, False)
 #print('STEP2')
 #time.sleep(2)
-reach_pos_XY(0.00, 0.00, False)
+reach_pos_XY(0.00, -0.02, False)
 print('STEP3')
 time.sleep(5)
 '''

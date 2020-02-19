@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import numpy as np
 from scipy.signal import butter,filtfilt
+import adaptfilt
 
 # Create a instance of the client
 _client = Client()
@@ -54,8 +55,10 @@ def reach_pos_XY(goal_x, goal_y, start):
 	global vec_step
 	global count_step
 	global force
-	global force_vec
+	global force_vect
 	global prevSignal
+	global d
+	global force1
 	
 
 	if start == True:
@@ -133,51 +136,6 @@ def reach_pos_XY(goal_x, goal_y, start):
 			force = sum / window_size
 			sum = 0
 		
-		
-
-		'''
-		force1 = np.append(force1, force2)
-		nsamps = len(force1)
-		samp_rate = 100
-		#x = np.interp(vec_step, len(graph_f), graph_f)
-		x = force1
-		#xfreq = np.fft.fft(x)
-		#fft_freqs = np.fft.fftfreq(nsamps, d=1./samp_rate)
-		#plt.loglog(fft_freqs[0:nsamps/2], np.abs(xfreq)[0:nsamps/2])
-		#plt.title('Filter Input - Frequency Domain')
-		#plt.grid(True)
-		#plt.show()
-
-		cuttoff_freq = 1
-		norm_pass = cuttoff_freq/(samp_rate/2)
-		norm_stop = 1.5*norm_pass
-		#(N, Wn) = signal.buttord(wp=norm_pass, ws=norm_stop, gpass=2, gstop=30, analog=0)
-		(b, a) = signal.butter(4, 0.1, btype='low', analog=0, output='ba')
-
-		#zi = signal.lfiltic(b, a, x[0:5], x[0:5])
-		#(y, zi) = signal.lfilter(b, a, x, zi=zi)
-		force_vec = signal.lfilter(b, a, x)
-		force = force_vec[-1]
-		
-		###########################################################################################
-		
-		count1 = count1 + 1
-		if count1 < window_size + 1:
-			window = np.append(window, force2)
-			force = force2
-		else:
-			for i in range(1, window_size):
-				window[i-1] = window[i]
-				if i == (window_size - 1):
-					window[i] = force2
-				sum = sum + window[i-1]
-			force = sum / window_size
-			sum = 0
-		'''
-		
-		###########################################################################################
-
-		
 		error = force_const - force
 		P_value = (Kp * error)
 	
@@ -220,16 +178,11 @@ def reach_pos_XY(goal_x, goal_y, start):
 				psm_handle_pfl.set_joint_pos(0, math.radians(degree_pfl))
 			else:
 				stop_y = True
+		
+
 
 		graph_f = np.append(graph_f, force)
-		'''
-		graph_d = np.append(graph_d, degree)
-		graph_PID = np.append(graph_PID, PID)
-		graph_Pval = np.append(graph_Pval, P_value)
-		graph_Ival = np.append(graph_Ival, I_value)
-		graph_frn = np.append(graph_frn, force_raw_now)
-		graph_m = np.append(graph_m, m)
-		'''
+	
 		pos = psm_handle_trl.get_pos()
 		#posZ =  pos.z
 		#graph_posZ = np.append(graph_posZ, posZ)
@@ -283,7 +236,7 @@ time.sleep(1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
 time.sleep(1)
-m = 0.18
+m = 0.16
 psm_handle_pel.set_joint_pos(0, m)
 time.sleep(1)
 print(psm_handle_trl.get_pos())
@@ -300,11 +253,13 @@ force_old2 = 0
 force_old1 = 0
 vec_step = []
 force1 = []
-force_vec = []
+force_vect = []
+d = []
 
 degree = 0
 delta = 0.6 
 delta_m = 0.00005
+delta_m_start = 0.0005
 band = 0.03
 limit_mi = 0.30
 
@@ -324,16 +279,14 @@ graph_posY = []
 posx_start0 = 0
 posy_start0 = 0
 
-force_const = 3
+force_const = 2
 
-'''
-good but with oscillations:
-Kp = 0.002
-Ki = 0.00007 or Ki = 0.0001 better
-'''
-Kp = 0.002
-Ki = 0.0001
-#Kd = 0.00005
+#Kp = 0.0065
+#Ki = 0.0005
+
+Kp = 0.0065
+Ki = 0.00005
+
 Integrator = 0
 Derivator = 0
 time_now = 0
@@ -351,10 +304,10 @@ while m < limit_mi:
 		print('\n')
 
 	if force > (force_const + band):
-		m = m - delta_m/2
+		m = m - delta_m_start/2
 		psm_handle_pel.set_joint_pos(0, m)
 	if force < (force_const - band):
-	    m = m + delta_m/2
+	    m = m + delta_m_start/2
 	    psm_handle_pel.set_joint_pos(0, m)
 
 	if (force < (force_const + band)) and (force > (force_const - band)):
@@ -385,18 +338,19 @@ while m < limit_mi:
 	posY =  pos.y
 
 print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-'''
+
 #reach_pos_XY(-0.12, 0.05, True)
-reach_pos_XY(-0.07, 0.03, True)
+reach_pos_XY(-0.05, 0.03, True)
 print('STEP1')
 time.sleep(2)
-#reach_pos_XY(0.05, 0.10, False)
-#print('STEP2')
-#time.sleep(2)
-reach_pos_XY(0.00, 0.00, False)
+reach_pos_XY(0.05, 0.10, False)
+print('STEP2')
+time.sleep(2)
+reach_pos_XY(0.00, -0.02, False)
 print('STEP3')
 time.sleep(5)
 '''
+
 reach_pos_XY(-0.05, 0.0, True)
 print('STEP1')
 time.sleep(0.5)
@@ -446,7 +400,7 @@ print('STEP13')
 time.sleep(5)
 
 print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
-
+'''
 '''
 plt.plot(graph_m)
 plt.grid()
