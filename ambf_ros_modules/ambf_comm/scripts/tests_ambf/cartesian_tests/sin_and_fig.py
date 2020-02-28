@@ -63,6 +63,18 @@ class Cartesian_control:
 	I_value = 0
 	D_value = 0
 	graph_frn = []
+	graph_q2_set0 = []
+	graph_q2_set1 = []
+	graph_q2_set3 = []
+	graph_q2_set4 = []
+	graph_q2_set2 = []
+	j2_read = []
+	j2_read1 = []
+	j2_read2 = []
+	j2_read3 = []
+	j2_read4 = []
+	graph_q3_set0 = []
+	j3_read = []
 	graph_posZ = []
 	graph_posX = []
 	graph_posY = []
@@ -75,6 +87,7 @@ class Cartesian_control:
 	l_tool = 0.05 + l_tool_original
 
 	force_const = 6
+
 	
 	'''
 	Kp = 0.002
@@ -126,6 +139,8 @@ class Cartesian_control:
 		self.q1_read = psm_handle_base.get_joint_pos(0)
 		self.q2_read = psm_handle_base.get_joint_pos(3)
 		self.q3_read = psm_handle_base.get_joint_pos(4)
+
+		
 
 		#print("actual angles")
 		#print(self.q1_read*180/self.pi, self.q2_read*180/self.pi, self.q3_read)
@@ -351,7 +366,6 @@ class Cartesian_control:
 	
 	'''
 
-
 	def reach_pos_XY(self, goal_x, goal_y, start):
 
 		if start == True:
@@ -535,6 +549,165 @@ class Cartesian_control:
 		print(self.x_fk, self.y_fk, self.z_fk)
 		print(self.jacobian(self.q1, self.q2, self.q3))
 
+	def temp01(self, qt1, qt2, qt3):
+		
+		#try this for every joint, once per time
+		self.q1 = 0
+		self.q2 = 0
+		self.set_position_robot(self.q1, self.q2, self.q3)
+		self.get_position_joints_PSM()
+		self.j1_read = np.append(self.j1_read, self.q1)
+
+	
+	def prescribed_sine(self):
+
+		times = 0
+		while times < 1:
+			
+			step = 0.1
+
+			for angle in np.arange(0, 360+step, step):
+				q2 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q2_set0 = np.append(self.graph_q2_set0, q2)
+				print(angle)
+				self.set_position_robot(0, q2, 0.12)
+				self.get_position_joints_PSM()
+				self.j2_read = np.append(self.j2_read, self.q2_read)
+			times = times + 1
+			time.sleep(2)
+			self.set_position_robot(0, 0, 0.12)
+			'''
+			step = 0.5
+
+			for angle in np.arange(0, 360+step, step):
+				q2 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q2_set1 = np.append(self.graph_q2_set1, q2)
+				print(angle)
+				self.set_position_robot(0, q2, 0.12)
+				self.get_position_joints_PSM()
+				self.j2_read1 = np.append(self.j2_read1, self.q2_read)
+			times = times + 1
+			time.sleep(2)
+			self.set_position_robot(0, 0, 0.12)
+			
+			step = 1
+
+			for angle in np.arange(0, 360+step, step):
+				q2 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q2_set2 = np.append(self.graph_q2_set2, q2)
+				print(angle)
+				self.set_position_robot(0, q2, 0.12)
+				self.get_position_joints_PSM()
+				self.j2_read2 = np.append(self.j2_read2, self.q2_read)
+			times = times + 1
+			time.sleep(2)
+			self.set_position_robot(0, 0, 0.12)
+			
+			step = 2
+
+			for angle in np.arange(0, 360+step, step):
+				q2 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q2_set3 = np.append(self.graph_q2_set3, q2)
+				print(angle)
+				self.set_position_robot(0, q2, 0.12)
+				self.get_position_joints_PSM()
+				self.j2_read3 = np.append(self.j2_read3, self.q2_read)
+			times = times + 1
+			time.sleep(2)
+			self.set_position_robot(0, 0, 0.12)
+			
+			step = 4
+
+			for angle in np.arange(0, 360+step, step):
+				q1 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q1_set4 = np.append(self.graph_q1_set4, q1)
+				print(angle)
+				self.set_position_robot(q1, 0, 0.12)
+				self.get_position_joints_PSM()
+				self.j1_read4 = np.append(self.j1_read4, self.q1_read)
+			times = times + 1
+			time.sleep(2)
+			'''
+		#print(self.grap_q1_set)
+		'''
+		fig = plt.figure()
+		fig, a = plt.subplots(2,2)
+		a[0][0].plot(self.graph_q2_set0)
+		a[0][0].plot(self.j2_read, color = 'y')
+		a[0][0].grid()
+		
+		#plt.figure(2)
+		a[0][1].plot(self.graph_q2_set1)
+		a[0][1].plot(self.j2_read1, color = 'r')
+		a[0][1].grid()
+		
+		#plt.figure(3)
+		a[1][0].plot(self.graph_q2_set2)
+		a[1][0].plot(self.j2_read2, color = 'g')
+		a[1][0].grid()
+		
+		#plt.figure(4)
+		a[1][1].plot(self.graph_q2_set3)
+		a[1][1].plot(self.j2_read3, color = 'b')
+		a[1][1].grid()
+		plt.show()
+		
+		#plt.figure(5)
+		plt.plot(self.graph_q1_set4)
+		plt.plot(self.j1_read4, color = 'k')		
+		plt.grid()
+		plt.show()
+		'''
+		fig = plt.figure()
+		plt.plot(self.graph_q2_set0)
+		plt.plot(self.j2_read, color = 'y')
+		plt.grid()
+		plt.show()
+		
+	def mainInsertionLink(self):
+		step = 0.5
+		for angle in np.arange(0.09, 360+step, step):
+			q3 = 0.18+0.06*(np.sin(math.radians(angle)))
+			self.graph_q3_set0 = np.append(self.graph_q3_set0, q3)
+			print(angle)
+			self.set_position_robot(0, 0, q3)
+			self.get_position_joints_PSM()
+			self.j3_read = np.append(self.j3_read, self.q3_read)
+		
+		time.sleep(2)
+		fig = plt.figure()
+		
+		plt.figure()
+		plt.plot(self.graph_q3_set0)
+		plt.plot(self.j3_read, color = 'y')
+		plt.grid()
+		plt.show()
+		#self.set_position_robot(0, 0, 0.12)
+
+	def mainInsertionLinkIK(self):
+		step = 0.5
+		for angle in np.arange(0.09, 360+step, step):
+			q3 = -0.18+0.06*(np.sin(math.radians(angle)))
+			self.graph_q3_set0 = np.append(self.graph_q3_set0, q3)
+			print(angle)
+			self.inverse_kinematics(0, 0, q3)
+			self.set_position_robot(0, 0, self.q3)
+			self.get_position_joints_PSM()
+			self.forward_kinematics(0,0,self.q3_read)
+			self.j3_read = np.append(self.j3_read, self.z_fk)
+		
+		time.sleep(2)
+		fig = plt.figure()
+		
+		plt.figure()
+		plt.plot(self.graph_q3_set0)
+		plt.plot(self.j3_read, color = 'y')
+		plt.grid()
+		plt.show()
+		#self.set_position_robot(0, 0, 0.12)
+
+
+
 
 def main():
 
@@ -600,13 +773,19 @@ def main():
 	
 	#cart_c.temp(-0.06, 0.04, 0.0)
 	
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.02, True)
-	cart_c.reach_pos_XY(-0.01, 0.04, False)
-	cart_c.reach_pos_XY(0.03, 0.02, False)
+	#cart_c.approach_goal_Z(m_start)
+	#cart_c.reach_pos_XY(0.01, 0.02, True)
+	#cart_c.reach_pos_XY(-0.01, 0.04, False)
+	#cart_c.reach_pos_XY(0.03, 0.02, False)
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
-	cart_c.plots()
+	cart_c.mainInsertionLinkIK()
+
+
+	
+	#cart_c.temp01
+ 
+	#cart_c.plots()
 	#cart_c.temp(-0.15, 0.16, -0.16)
 	
 	print('STEP1')

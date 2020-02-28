@@ -48,11 +48,11 @@ class Cartesian_control:
 	force_vect = []
 
 	degree = 0
-	delta = 0.6
-	m = 0 
-	delta_m = 0.000005
+	delta = 0.6 
+	delta_m = 0.00005
 	delta_m_start = 0.00005
-	band = 0.2
+	band = 0.03
+	band2 = 0.5
 	limit_mi = 0.30
 	update_pos = False
 
@@ -74,7 +74,31 @@ class Cartesian_control:
 	l_tool_original = 0.4162
 	l_tool = 0.05 + l_tool_original
 
-	force_const = 6
+	Kp_start = 0.000001
+	Ki_start = 0.000001
+
+	amplitude = 0.3
+
+	force_const = 1.0-amplitude
+
+
+	Integrator = 0
+	Derivator = 0
+	time_now = 0
+
+	flag_first_pos = True
+
+	
+	'''
+	Kp = 0.002
+	Ki = 0.00005
+	#Kd = 0.00008
+    '''
+	#Kp = 0.002
+	#Ki = 0.0001
+	#Kd = 0.00008
+
+
 	
 	'''
 	Kp = 0.002
@@ -126,6 +150,8 @@ class Cartesian_control:
 		self.q1_read = psm_handle_base.get_joint_pos(0)
 		self.q2_read = psm_handle_base.get_joint_pos(3)
 		self.q3_read = psm_handle_base.get_joint_pos(4)
+
+		
 
 		#print("actual angles")
 		#print(self.q1_read*180/self.pi, self.q2_read*180/self.pi, self.q3_read)
@@ -351,7 +377,6 @@ class Cartesian_control:
 	
 	'''
 
-
 	def reach_pos_XY(self, goal_x, goal_y, start):
 
 		if start == True:
@@ -535,6 +560,313 @@ class Cartesian_control:
 		print(self.x_fk, self.y_fk, self.z_fk)
 		print(self.jacobian(self.q1, self.q2, self.q3))
 
+	def temp01(self, qt1, qt2, qt3):
+		
+		#try this for every joint, once per time
+		self.q1 = 0
+		self.q2 = 0
+		self.set_position_robot(self.q1, self.q2, self.q3)
+		self.get_position_joints_PSM()
+		self.j1_read = np.append(self.j1_read, self.q1)
+
+	
+	def prescribed_sine(self):
+
+		times = 0
+		while times < 1:
+			
+			step = 0.1
+
+			for angle in np.arange(0, 360+step, step):
+				q2 = math.radians(30*np.sin(math.radians(angle)))
+				self.graph_q2_set0 = np.append(self.graph_q2_set0, q2)
+				print(angle)
+				self.set_position_robot(0, q2, 0.12)
+				self.get_position_joints_PSM()
+				self.j2_read = np.append(self.j2_read, self.q2_read)
+			times = times + 1
+			time.sleep(2)
+			self.set_position_robot(0, 0, 0.12)
+			
+		fig = plt.figure()
+		plt.plot(self.graph_q2_set0)
+		plt.plot(self.j2_read, color = 'y')
+		plt.grid()
+		plt.show()
+		
+	def mainInsertionLink(self):
+		step = 0.5
+		for angle in np.arange(0.09, 360+step, step):
+			q3 = 0.18+0.06*(np.sin(math.radians(angle)))
+			self.graph_q3_set0 = np.append(self.graph_q3_set0, q3)
+			print(angle)
+			self.set_position_robot(0, 0, q3)
+			self.get_position_joints_PSM()
+			self.j3_read = np.append(self.j3_read, self.q3_read)
+		
+		time.sleep(2)
+		fig = plt.figure()
+		
+		plt.figure()
+		plt.plot(self.graph_q3_set0)
+		plt.plot(self.j3_read, color = 'y')
+		plt.grid()
+		plt.show()
+		#self.set_position_robot(0, 0, 0.12)
+
+	def mainInsertionLinkIK(self):
+		step = 0.5
+		for angle in np.arange(0.09, 360+step, step):
+			q3 = -0.18+0.06*(np.sin(math.radians(angle)))
+			self.graph_q3_set0 = np.append(self.graph_q3_set0, q3)
+			print(angle)
+			self.inverse_kinematics(0, 0, q3)
+			self.set_position_robot(0, 0, self.q3)
+			self.get_position_joints_PSM()
+			self.forward_kinematics(0,0,self.q3_read)
+			self.j3_read = np.append(self.j3_read, self.z_fk)
+		
+		time.sleep(2)
+		fig = plt.figure()
+		
+		plt.figure()
+		plt.plot(self.graph_q3_set0)
+		plt.plot(self.j3_read, color = 'y')
+		plt.grid()
+		plt.show()
+		#self.set_position_robot(0, 0, 0.12)
+
+	def exert_sin_force(self, m_start, X_desired, Y_desired, begin):
+		'''
+		#kind of sinus
+		Kps = 0.0007
+		Kis = 0.000001
+		'''
+		Kps = 0.003
+		Kis = 0.00001
+		#Kis = 0
+		self.approach_goal_Z(m_start)
+		x_fixed = 0.00000001
+		self.reach_pos_XY(x_fixed,0.01, True)
+		dy = 0.01
+		dist_y = 0.01
+		degree = -psm_handle_pfl.get_joint_pos(0)
+		while degree <= math.radians(10):
+			self.reach_pos_XY(0,dist_y,False)
+			degree = -psm_handle_pfl.get_joint_pos(0)
+			print(degree*180/3.14)
+			dist_y = dist_y + dy
+		X_desired = x_fixed
+		Y_desired = dist_y
+		print("STARTING SINUSOID IN 2 SECONDS")
+		#time.sleep(2)
+		force_base = self.force_const
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
+		
+		step = 0.5
+		times = 0
+		angle = 0
+		while times<3:
+			
+			force_raw_now = psm_handle_mi.get_force()
+
+			count = count + 1
+			if count < window_size + 1:
+				window = np.append(window, force_raw_now)
+				self.force = force_raw_now
+			else:
+				for i in range(1, window_size):
+					window[i-1] = window[i]
+					if i == (window_size - 1):
+						window[i] = force_raw_now
+					sum = sum + window[i-1]
+				self.force = sum / window_size
+				sum = 0
+
+			if angle >= 360:
+				angle = 0
+				times = times + 1
+			angle = angle + step
+			force_target = force_base + self.amplitude*np.sin(math.radians(angle))
+			
+			
+			error = force_target - self.force
+			self.P_value = (self.Kp * error)
+		
+			self.Integrator = self.Integrator + error
+			self.I_value = self.Integrator * self.Ki
+		
+		
+			PID = self.P_value + self.I_value 
+
+			self.get_position_joints_PSM()
+			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+			#X_desired_2 = self.x_fk
+			#Y_desired_2 = self.y_fk
+			Z_desired_2 = self.z_fk
+			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
+
+			#INTERNAL BLOCK
+			
+			self.inverse_kinematics(X_desired, Y_desired, Z_desired_2)
+			self.jacobian(self.q1, self.q2, self.q3)
+			
+			if self.flag_first_pos == True:
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				self.flag_first_pos = False
+				
+			if self.flag_first_pos == False:
+				delta_cart = [0, 0, 0]
+				delta_q = [0, 0, 0]
+				delta_cart[0] = X_desired-self.x_fk
+				delta_cart[1] = Y_desired-self.y_fk
+				delta_cart[2] = Z_desired_2-self.z_fk
+				#print(delta_cart)
+				invJ = np.linalg.inv(self.jac) 
+				delta_q = invJ.dot(delta_cart)
+				self.q1 = self.q1 + delta_q[0]
+				self.q2 = self.q2 + delta_q[1]
+				self.q3 = self.q3 + delta_q[2]
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				#self.update_pos == True
+			print("\n")
+			print(angle)
+			print(self.force, force_target)
+			if self.update_pos == True:
+				self.graph_f = np.append(self.graph_f, self.force)
+			
+			if self.update_pos == False:
+				print(self.force)
+				if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
+					self.count_mi_loop = self.count_mi_loop + 1
+					print("waiting...", self.count_mi_loop)
+				if self.count_mi_loop == 10:
+					count_mi_loop = 0
+					self.update_pos = True
+
+	def exert_sin_force1(self, m_start):
+		
+		set_angle = 5
+		print("SET INCLINATION")
+		psm_handle_pfl.set_joint_pos(0,math.radians(-set_angle))
+		time.sleep(0.5)
+		self.approach_goal_Z(m_start)
+		Kps = 0.003
+		Kis = 0.00001
+		print("STARTING SINUSOID IN 2 SECONDS")
+		time.sleep(2)
+		force_base = self.force_const
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
+		
+		step = 0.5
+		times = 0
+		angle = 0
+		while times<1:
+			
+			force_raw_now = psm_handle_mi.get_force()
+
+			count = count + 1
+			if count < window_size + 1:
+				window = np.append(window, force_raw_now)
+				self.force = force_raw_now
+			else:
+				for i in range(1, window_size):
+					window[i-1] = window[i]
+					if i == (window_size - 1):
+						window[i] = force_raw_now
+					sum = sum + window[i-1]
+				self.force = sum / window_size
+				sum = 0
+
+			if angle >= 360:
+				angle = 0
+				times = times + 1
+			angle = angle + step
+			force_target = force_base + self.amplitude*np.sin(math.radians(angle))
+			
+			
+			error = force_target - self.force
+			self.P_value = (self.Kp * error)
+		
+			self.Integrator = self.Integrator + error
+			self.I_value = self.Integrator * self.Ki
+		
+		
+			PID = self.P_value + self.I_value 
+
+			self.get_position_joints_PSM()
+			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+			X_desired = self.x_fk
+			Y_desired = self.y_fk
+			Z_desired_2 = self.z_fk
+			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
+
+			#INTERNAL BLOCK
+			
+			self.inverse_kinematics(X_desired, Y_desired, Z_desired_2)
+			self.jacobian(self.q1, self.q2, self.q3)
+			
+			if self.flag_first_pos == True:
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				self.flag_first_pos = False
+				
+			if self.flag_first_pos == False:
+				delta_cart = [0, 0, 0]
+				delta_q = [0, 0, 0]
+				delta_cart[0] = X_desired-self.x_fk
+				delta_cart[1] = Y_desired-self.y_fk
+				delta_cart[2] = Z_desired_2-self.z_fk
+				#print(delta_cart)
+				invJ = np.linalg.inv(self.jac) 
+				delta_q = invJ.dot(delta_cart)
+				self.q1 = self.q1 + delta_q[0]
+				self.q2 = self.q2 + delta_q[1]
+				self.q3 = self.q3 + delta_q[2]
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				#self.update_pos == True
+			print("\n")
+			print(angle)
+			print(self.force, force_target)
+			if self.update_pos == True:
+				self.graph_f = np.append(self.graph_f, self.force)
+			
+			if self.update_pos == False:
+				print(self.force)
+				if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
+					self.count_mi_loop = self.count_mi_loop + 1
+					print("waiting...", self.count_mi_loop)
+				if self.count_mi_loop == 1:
+					count_mi_loop = 0
+					self.update_pos = True
+
+
+
+		
+			
+
+
+
+
 
 def main():
 
@@ -584,7 +916,7 @@ def main():
 	#psm_handle_pel.set_joint_pos(0, 0.1)
 	#time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.17
+	m_start = 0.18
 	psm_handle_pel.set_joint_pos(0, m_start)
 	
 
@@ -600,13 +932,21 @@ def main():
 	
 	#cart_c.temp(-0.06, 0.04, 0.0)
 	
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.02, True)
-	cart_c.reach_pos_XY(-0.01, 0.04, False)
-	cart_c.reach_pos_XY(0.03, 0.02, False)
+	#cart_c.approach_goal_Z(m_start)
+	#cart_c.reach_pos_XY(0.01, 0.02, True)
+	#cart_c.reach_pos_XY(-0.01, 0.04, False)
+	#cart_c.reach_pos_XY(0.03, 0.02, False)
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
-	cart_c.plots()
+	begin = True
+	#cart_c.exert_sin_force(m_start, 0, 0, begin)
+	cart_c.exert_sin_force1(m_start)
+
+
+	
+	#cart_c.temp01
+ 
+	#cart_c.plots()
 	#cart_c.temp(-0.15, 0.16, -0.16)
 	
 	print('STEP1')
@@ -617,7 +957,7 @@ def main():
 	
 	
 	
-	#cart_c.plots()
+	cart_c.plots()
 
 
 	raw_input("Let's clean up. Press Enter to continue...")

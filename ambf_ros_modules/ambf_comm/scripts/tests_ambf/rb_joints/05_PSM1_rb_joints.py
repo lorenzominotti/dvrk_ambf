@@ -283,7 +283,7 @@ time.sleep(1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
 time.sleep(1)
-m = 0.18
+m = 0.16
 psm_handle_pel.set_joint_pos(0, m)
 time.sleep(1)
 print(psm_handle_trl.get_pos())
@@ -305,6 +305,7 @@ force_vec = []
 degree = 0
 delta = 0.6 
 delta_m = 0.00005
+delta_m_start = 0.0001
 band = 0.03
 limit_mi = 0.30
 
@@ -324,16 +325,21 @@ graph_posY = []
 posx_start0 = 0
 posy_start0 = 0
 
-force_const = 3
+force_const = 6
 
-'''
-good but with oscillations:
-Kp = 0.002
-Ki = 0.00007 or Ki = 0.0001 better
-'''
+
+#circle:
 Kp = 0.002
 Ki = 0.0001
+
+'''
+Kp = 0.0005
+#Ki = 0.0001
+Ki = 0.00001
+Kd = 0.00008
+#Ki = 0.0001
 #Kd = 0.00005
+'''
 Integrator = 0
 Derivator = 0
 time_now = 0
@@ -351,33 +357,24 @@ while m < limit_mi:
 		print('\n')
 
 	if force > (force_const + band):
-		m = m - delta_m/2
+		m = m - delta_m_start/2
 		psm_handle_pel.set_joint_pos(0, m)
 	if force < (force_const - band):
-	    m = m + delta_m/2
+	    m = m + delta_m_start/2
 	    psm_handle_pel.set_joint_pos(0, m)
 
 	if (force < (force_const + band)) and (force > (force_const - band)):
 		count_mi_loop = count_mi_loop + 1
-	if count_mi_loop == 50:
+	if count_mi_loop == 10:
 		break
 	
 	psm_handle_pel.set_joint_pos(0, m)
 	force_old2 = force_old1
 	force_old1 = force
 	graph_f = np.append(graph_f, force)
-	graph_d = np.append(graph_d, degree)
 	PID = 1
-	graph_PID = np.append(graph_PID, PID)
-	graph_Pval = np.append(graph_Pval, P_value)
-	graph_Ival = np.append(graph_Ival, I_value)
-	graph_Dval = np.append(graph_Dval, D_value)
 	graph_frn = np.append(graph_frn, force_raw_now)
 	graph_m = np.append(graph_m, m)
-	time_old = time_now
-	time_now = time.time()
-	time_s = time_now - time_old
-	freq = 1/time_s
 	pos = psm_handle_trl.get_pos()
 	posZ =  pos.z
 	graph_posZ = np.append(graph_posZ, posZ)
@@ -385,15 +382,15 @@ while m < limit_mi:
 	posY =  pos.y
 
 print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-'''
-#reach_pos_XY(-0.12, 0.05, True)
-reach_pos_XY(-0.07, 0.03, True)
+
+#reach_pos_XY(-0.07, 0.05, True)
+reach_pos_XY(-0.05, 0.03, True)
 print('STEP1')
 time.sleep(2)
-#reach_pos_XY(0.05, 0.10, False)
+reach_pos_XY(0.05, 0.06, False)
 #print('STEP2')
 #time.sleep(2)
-reach_pos_XY(0.00, 0.00, False)
+reach_pos_XY(0.00, -0.02, False)
 print('STEP3')
 time.sleep(5)
 '''
@@ -444,80 +441,20 @@ time.sleep(0.5)
 reach_pos_XY(-0.05, 0.0, False)
 print('STEP13')
 time.sleep(5)
-
+'''
 print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
 
-'''
-plt.plot(graph_m)
-plt.grid()
-plt.show()
-'''
 #plt.plot(graph_frn)
 plt.plot(graph_f, color = 'r')
 #plt.plot(graph_d, color = 'g')
 plt.grid()
 plt.show()
-'''
-nsamps = len(graph_f)
-samp_rate = 100
-#x = np.interp(vec_step, len(graph_f), graph_f)
-x = graph_f
-xfreq = np.fft.fft(x)
-fft_freqs = np.fft.fftfreq(nsamps, d=1./samp_rate)
-#plt.loglog(fft_freqs[0:nsamps/2], np.abs(xfreq)[0:nsamps/2])
-#plt.title('Filter Input - Frequency Domain')
-#plt.grid(True)
-#plt.show()
 
-cuttoff_freq = 1
-norm_pass = cuttoff_freq/(samp_rate/2)
-norm_stop = 1.5*norm_pass
-#(N, Wn) = signal.buttord(wp=norm_pass, ws=norm_stop, gpass=2, gstop=30, analog=0)
-(b, a) = signal.butter(4, 0.1, btype='low', analog=0, output='ba')
-
-#zi = signal.lfiltic(b, a, x[0:5], x[0:5])
-#(y, zi) = signal.lfilter(b, a, x, zi=zi)
-y = signal.lfilter(b, a, x)
-plt.plot(y)
-plt.title('Filter output - Time Domain')
-plt.grid(True)
-plt.show()
-
-yfreq = np.fft.fft(y)
-plt.loglog(fft_freqs[0:nsamps/2], np.abs(yfreq)[0:nsamps/2])
-plt.grid(True)
-plt.show()
-
-'''
-'''
-plt.plot(graph_posZ)
-#plt.plot(graph_d, color = 'g')
-plt.grid()
-plt.show()
-
-plt.plot(graph_posY)
-#plt.plot(graph_d, color = 'g')
-plt.grid()
-plt.show()
-'''
 plt.plot(graph_posX)
 plt.plot(graph_posY)
 #plt.plot(graph_d, color = 'g')
 plt.grid()
 plt.show()
-'''
-plt.plot(graph_d, color = 'g')
-plt.grid()
-plt.show()
-'''
-'''
-plt.plot(graph_PID, color = 'g')
-plt.plot(graph_Pval, color = 'b')
-plt.plot(graph_Ival, color = 'r')
-plt.plot(graph_Dval, color = 'y')
-plt.grid()
-plt.show()
-'''
 
 raw_input("Let's clean up. Press Enter to continue...")
 # Lastly to cleanup

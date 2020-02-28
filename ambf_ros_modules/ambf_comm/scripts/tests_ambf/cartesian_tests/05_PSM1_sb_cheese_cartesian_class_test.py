@@ -48,11 +48,11 @@ class Cartesian_control:
 	force_vect = []
 
 	degree = 0
-	delta = 0.6
-	m = 0 
-	delta_m = 0.000005
+	delta = 0.6 
+	delta_m = 0.00005
 	delta_m_start = 0.00005
-	band = 0.2
+	band = 0.03
+	band2 = 0.5
 	limit_mi = 0.30
 	update_pos = False
 
@@ -74,15 +74,20 @@ class Cartesian_control:
 	l_tool_original = 0.4162
 	l_tool = 0.05 + l_tool_original
 
-	force_const = 6
+	Kp_start = 0.000001
+	Ki_start = 0.000001
+
+	force_const = 2
 	
+	Kp = 0.00000001
+	Ki = 0.000000001
+	#Kd = 0.00008
 	'''
 	Kp = 0.002
-	Ki = 0.00005
+	Ki = 0.0001
 	#Kd = 0.00008
     '''
-	Kp = 0.002
-	Ki = 0.00005
+
 	#Kd = 0.00008
 
 	Integrator = 0
@@ -185,7 +190,6 @@ class Cartesian_control:
 		print("\n")
 		print("pos end loop")
 		print(self.q1_read, self.q2_read, self.q3_read)
-	'''
 	
 	
 	def approach_goal_Z(self, m_start):
@@ -230,7 +234,7 @@ class Cartesian_control:
 			self.posX =  pos.x
 			self.posY =  pos.y
 	
-	'''
+	
 	def approach_goal_Z(self, m_start):
 		self.m = m_start
 		force_old2 = 0
@@ -284,7 +288,7 @@ class Cartesian_control:
 			self.posX =  pos.x
 			self.posY =  pos.y
 	
-	
+	'''
 	def approach_goal_Z(self, m_start):
 		self.m = m_start
 		self.q1 = 0
@@ -349,7 +353,7 @@ class Cartesian_control:
 			self.posX =  pos.x
 			self.posY =  pos.y
 	
-	'''
+	
 
 
 	def reach_pos_XY(self, goal_x, goal_y, start):
@@ -466,7 +470,7 @@ class Cartesian_control:
 				
 				if self.update_pos == False:
 					print(self.force)
-					if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
+					if (self.force < (self.force_const + self.band2)) and (self.force > (self.force_const - self.band2)):
 						self.count_mi_loop = self.count_mi_loop + 1
 						print("waiting...", self.count_mi_loop)
 					if self.count_mi_loop == 10:
@@ -498,7 +502,7 @@ class Cartesian_control:
 					else:
 						stop_y = True
 
-				self.force1 = self.force
+				#self.force1 = self.force
 
 			print("\n")
 			print(X_desired)
@@ -507,7 +511,8 @@ class Cartesian_control:
 			
 			
 
-			self.graph_f = np.append(self.graph_f, self.force1)
+			#self.graph_f = np.append(self.graph_f, self.force1)
+			self.graph_f = np.append(self.graph_f, self.force)
 			'''
 			posX =  pos.x
 			graph_posX = np.append(graph_posX, posX)
@@ -584,7 +589,7 @@ def main():
 	#psm_handle_pel.set_joint_pos(0, 0.1)
 	#time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.17
+	m_start = 0.18
 	psm_handle_pel.set_joint_pos(0, m_start)
 	
 
@@ -604,8 +609,8 @@ def main():
 	cart_c.reach_pos_XY(0.01, 0.02, True)
 	cart_c.reach_pos_XY(-0.01, 0.04, False)
 	cart_c.reach_pos_XY(0.03, 0.02, False)
-	#cart_c.reach_pos_XY(0.01, -0.01, False)
-	#cart_c.reach_pos_XY(-0.03, -0.05, False)
+	cart_c.reach_pos_XY(0.01, -0.01, False)
+	cart_c.reach_pos_XY(-0.03, -0.05, False)
 	cart_c.plots()
 	#cart_c.temp(-0.15, 0.16, -0.16)
 	

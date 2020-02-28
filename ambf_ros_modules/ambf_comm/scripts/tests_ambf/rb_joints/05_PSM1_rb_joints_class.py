@@ -48,14 +48,15 @@ class Joint_control:
 	force_vect = []
 
 	degree = 0
-	delta = 0.6
-	m = 0 
+	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.0005
+	delta_m_start = 0.0001
 	band = 0.03
 	limit_mi = 0.30
 
 	f_inv = 0.01
+	m = 0
+
 
 	count_mi_loop = 0
 	P_value = 0
@@ -71,13 +72,13 @@ class Joint_control:
 	posY = 0
 	posZ = 0
 
-	force_const = 2
+	force_const = 6
 
-	#Kp = 0.0065
-	#Ki = 0.0005
-
-	Kp = 0.0065
-	Ki = 0.00005
+	
+	#circle:
+	Kp = 0.002
+	Ki = 0.00005 
+	
 
 	Integrator = 0
 	Derivator = 0
@@ -112,7 +113,7 @@ class Joint_control:
 
 			if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
 				self.count_mi_loop = self.count_mi_loop + 1
-			if self.count_mi_loop == 50:
+			if self.count_mi_loop == 10:
 				break
 			
 			psm_handle_pel.set_joint_pos(0, self.m)
@@ -337,7 +338,7 @@ def main():
 	joint_c.reach_pos_XY(-0.05, 0.03, True)
 	print('STEP1')
 	time.sleep(2)
-	joint_c.reach_pos_XY(0.05, 0.10, False)
+	joint_c.reach_pos_XY(0.05, 0.06, False)
 	print('STEP2')
 	time.sleep(2)
 	joint_c.reach_pos_XY(0.00, -0.02, False)
