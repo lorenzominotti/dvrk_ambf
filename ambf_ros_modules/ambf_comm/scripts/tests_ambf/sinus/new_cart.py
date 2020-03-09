@@ -43,6 +43,7 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 class Cartesian_control:
 	
+	e_rel = 0
 	force_raw = []
 	graph_f = []
 	graph_m = []
@@ -93,7 +94,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 1.5-amplitude
+	force_const = 1.0-amplitude
 
 	deltat_a = 0
 	time = []
@@ -119,6 +120,10 @@ class Cartesian_control:
 	Integrator = 0
 	Derivator = 0
 	time_now = 0
+
+	x_loop = 0
+	y_loop = 0
+	z_loop = 0
 
 	flag_first_pos = True
 	
@@ -235,10 +240,9 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
 		
-				
-		fig, axs = plt.subplots(nrows = 6)
+		
+		fig, axs = plt.subplots(nrows = 5)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -247,33 +251,26 @@ class Cartesian_control:
 		axs[0].grid()
 
 		axs[1].plot(time, self.error_force, color = 'r', label = "error")
-		axs[1].set(ylabel = 'Force_error_norm')
+		axs[1].set(ylabel = 'Force_error %')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
 		axs[2].plot(time, self.er_x, label = "err_posx")
-		axs[2].set(ylabel = 'pox_error [m]')
+		axs[2].set(ylabel = 'pox_error %')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
 		axs[3].plot(time, self.er_y, label = "err_posy")
-		axs[3].set(ylabel = 'posy_error [m]')
+		axs[3].set(ylabel = 'posy_error %')
 		axs[3].legend(loc='best')
 		axs[3].grid()
 
 		axs[4].plot(time, self.er_z, label = "err_posz")
-		axs[4].set(ylabel = 'posz_error [m]')
+		axs[4].set(ylabel = 'posz_error %')
 		axs[4].set(xlabel = 'Time [s]')	
 		axs[4].legend(loc='best')
 		axs[4].grid()
-
-		axs[5].plot(time, self.graph_px, label = "posx")
-		axs[5].plot(time, self.graph_py, label = "posy")
-		axs[5].set(ylabel = 'position xy [m]')
-		axs[5].set(xlabel = 'Time [s]')	
-		axs[5].legend(loc='best')
-		axs[5].grid()
-
+	
 		plt.show()
 		'''
 		fig, axs = plt.subplots(nrows = 2)
@@ -314,7 +311,7 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
+		
 
 	def plot_sin(self):
 		time = []
@@ -336,6 +333,256 @@ class Cartesian_control:
 		axs[1].grid()
 
 		plt.show()
+
+	def position_loop(self, goal_x, goal_y, start, Z_desired_2):
+
+		if start == True:
+			posx_start =  0.000000001
+			posy_start =  0.000000001
+			X_desired = 0.0
+			Y_desired = 0.0
+			count_step = 0.0
+			self.posx_end = goal_x
+			self.posy_end = goal_y
+			self.first = 1
+
+		if start == False:
+			
+			posx_start =  self.posx_end
+			posy_start =  self.posy_end
+			self.posx_end = goal_x
+			self.posy_end = goal_y
+			X_desired = posx_start
+			Y_desired = posy_start
+
+		path_x = abs(goal_x - posx_start)
+		path_y = abs(goal_y - posy_start)
+
+		if path_x >= path_y:
+			path_long = path_x
+			path_short = path_y
+		if path_x < path_y:
+			path_long = path_y
+			path_short = path_x
+
+		d_step_long = 0.002
+		#d_step_long = 0.0001
+		d_step_short = (path_short / path_long) * d_step_long
+		if path_x >= path_y:
+			dx = d_step_long
+			dy = d_step_short
+		if path_x < path_y:
+			dx = d_step_short
+			dy = d_step_long 
+
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
+		
+		stop_x = False
+		stop_y = False
+		x_loop = 0
+		y_loop = 0
+		z_loop = 0
+		
+		
+		
+		while (stop_x == False) or (stop_y == False):
+
+			self.get_position_joints_PSM()
+			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+			
+
+			X_desired_2 = self.x_fk
+			Y_desired_2 = self.y_fk
+			print(self.z_fk)
+
+			Kpx = 0.8
+			Kix = 0.003		
+			errorx = X_desired - x_loop
+			self.P_value = (Kpx * errorx)		
+			self.Integrator = self.Integrator + errorx
+			self.I_value = self.Integrator * Kix		
+			PID = self.P_value + self.I_value 
+			X_desired_2 = X_desired_2 + PID*X_desired_2
+
+			Kpy = 0.8
+			Kiy = 0.003		
+			errory = Y_desired - y_loop
+			self.P_value = (Kpy * errory)		
+			self.Integrator = self.Integrator + errory
+			self.I_value = self.Integrator * Kiy		
+			PID = self.P_value + self.I_value 
+			Y_desired_2 = Y_desired_2 + PID*Y_desired_2
+
+			Kpz = 0.01
+			Kiz = 0.000001
+			errorz = Z_desired_2 - z_loop
+			self.P_value = (Kpz * errorz)		
+			self.Integrator = self.Integrator + errorz
+			self.I_value = self.Integrator * Kiz		
+			PID = self.P_value + self.I_value 
+			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
+						
+			#INTERNAL BLOCK
+			
+			self.inverse_kinematics(X_desired_2, Y_desired_2, Z_desired_2)
+			self.jacobian(self.q1, self.q2, self.q3)
+						
+			if self.flag_first_pos == True:
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				self.flag_first_pos = False
+				
+				
+			if self.flag_first_pos == False:
+				delta_cart = [0, 0, 0]
+				delta_q = [0, 0, 0]
+				delta_cart[0] = X_desired-self.x_fk
+				delta_cart[1] = Y_desired-self.y_fk
+				delta_cart[2] = Z_desired_2-self.z_fk
+				#print(delta_cart)
+				invJ = np.linalg.inv(self.jac) 
+				delta_q = invJ.dot(delta_cart)
+				self.q1 = self.q1 + delta_q[0]
+				self.q2 = self.q2 + delta_q[1]
+				self.q3 = self.q3 + delta_q[2]
+				self.set_position_robot(self.q1, self.q2, self.q3)
+				time.sleep(0.1)
+				self.get_position_joints_PSM()
+				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+		
+				
+		
+			if self.update_pos == False:
+				print(self.force)
+				if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
+					self.count_mi_loop = self.count_mi_loop + 1
+					print("waiting...", self.count_mi_loop)
+				if self.count_mi_loop == 10:
+					count_mi_loop = 0
+					
+					self.update_pos = True
+
+				self.graph_f = np.append(self.graph_f, self.force)
+				self.graph_fd = np.append(self.graph_fd, self.force_const)
+				self.count_time()
+				self.error_force = np.append(self.error_force, self.e_rel)
+				self.count_time_ef()
+				self.graph_px = np.append(self.graph_px, X_desired)
+				self.graph_py = np.append(self.graph_py, Y_desired)
+
+				fr_x,_,_ = psm_handle_mi.get_force()
+				#fr_x = psm_handle_mi.get_force()
+				self.fr_x = np.append(self.fr_x, fr_x)
+				_,fr_y,_ = psm_handle_mi.get_force()
+				#fr_y = psm_handle_mi.get_force()
+				self.fr_y = np.append(self.fr_y, fr_y)
+				_,_,fr_z = psm_handle_mi.get_force()
+				#fr_z = psm_handle_mi.get_force()
+				self.fr_z = np.append(self.fr_z, fr_z)
+
+				#ex = (X_desired-self.x_fk)/X_desired
+				ex = 0
+				self.er_x = np.append(self.er_x, ex)
+				#ey = (Y_desired-self.y_fk)/Y_desired
+				ey = 0
+				self.er_y = np.append(self.er_y, ey)
+				#ez = (Z_desired_2-self.z_fk)/Z_desired_2
+				ez = 0
+				self.er_z = np.append(self.er_z, ez)
+
+
+
+			if self.update_pos == True:
+				print(self.force, self.force_const)
+
+				#print(self.force, self.force_const)
+
+				if goal_x >= posx_start:
+					if goal_x > X_desired:
+						X_desired = X_desired + dx
+					else:
+						stop_x = True
+				if goal_x < posx_start:
+					if goal_x < X_desired:
+						X_desired = X_desired - dx
+					else:
+						stop_x = True
+
+				if goal_y >= posy_start:
+					if goal_y > Y_desired:
+						Y_desired = Y_desired + dy
+					else:
+						stop_y = True
+				if goal_y < posy_start:
+					if goal_y < Y_desired:
+						Y_desired = Y_desired - dy
+					else:
+						stop_y = True
+
+
+
+				self.graph_f = np.append(self.graph_f, self.force)
+				self.graph_fd = np.append(self.graph_fd, self.force_const)
+				self.count_time()
+				self.error_force = np.append(self.error_force, self.e_rel)
+				self.count_time_ef()
+				self.graph_px = np.append(self.graph_px, X_desired)
+				self.graph_py = np.append(self.graph_py, Y_desired)
+
+				fr_x,_,_ = psm_handle_mi.get_force()
+				#fr_x = psm_handle_mi.get_force()
+				self.fr_x = np.append(self.fr_x, fr_x)
+				_,fr_y,_ = psm_handle_mi.get_force()
+				#fr_y = psm_handle_mi.get_force()
+				self.fr_y = np.append(self.fr_y, fr_y)
+				_,_,fr_z = psm_handle_mi.get_force()
+				#fr_z = psm_handle_mi.get_force()
+				self.fr_z = np.append(self.fr_z, fr_z)
+
+				ex = (X_desired-self.x_fk)#/X_desired
+				self.er_x = np.append(self.er_x, ex)
+				ey = (Y_desired-self.y_fk)/Y_desired
+				self.er_y = np.append(self.er_y, ey)
+				ez = (Z_desired_2-self.z_fk)/Z_desired_2
+				self.er_z = np.append(self.er_z, ez)
+				self.update_pos = True
+
+				self.update_pos = True
+				if stop_x == True and stop_y == True:
+					print("CANIIIIIIIIIIIIIIIIIIIIIIIIII")
+					break
+
+			x_loop = self.x_fk
+			y_loop = self.y_fk
+			z_loop = self.z_fk
+
+		
+
+			
+
+			
+			print("\n")
+			print(X_desired)
+			print(Y_desired)
+			print("\n")
+
+
+						
+			#self.count_step = self.count_step + 1
+			#vec_step = np.append(vec_step, count_step)
+
+		
+		self.flag_first_pos = True	
+		self.update_pos == False
+		force_z = _,_,force_raw_now = psm_handle_mi.get_force()
+
+		return force_z
 
 	
 	def approach_goal_Z(self, m_start):
@@ -407,58 +654,22 @@ class Cartesian_control:
 
 	def reach_pos_XY(self, goal_x, goal_y, start):
 
-		if start == True:
-			posx_start =  0.000000001
-			posy_start =  0.000000001
-			posz_start =  0.000000001
-			X_desired = 0.0
-			Y_desired = 0.0
-			count_step = 0
-			self.posx_end = goal_x
-			self.posy_end = goal_y
-
-		if start == False:
-			
-			posx_start =  self.posx_end
-			posy_start =  self.posy_end
-			self.posx_end = goal_x
-			self.posy_end = goal_y
-			X_desired = posx_start
-			Y_desired = posy_start
-
-		path_x = abs(goal_x - posx_start)
-		path_y = abs(goal_y - posy_start)
-
-		if path_x >= path_y:
-			path_long = path_x
-			path_short = path_y
-		if path_x < path_y:
-			path_long = path_y
-			path_short = path_x
-
-		d_step_long = 0.0001
-		d_step_short = (path_short / path_long) * d_step_long
-		if path_x >= path_y:
-			dx = d_step_long
-			dy = d_step_short
-		if path_x < path_y:
-			dx = d_step_short
-			dy = d_step_long 
-
+		i = 0
 		count = 0
 		window = []
 		window_size = 10
 		sum = 0
 		count1 = 0
-		
-		stop_x = False
-		stop_y = False
-		
-		while (stop_x == False) or (stop_y == False):
 
-			self.time_start_a = time.time()			
-			_,_,force_raw_now = psm_handle_mi.get_force()
-			#force_raw_now = psm_handle_mi.get_force()
+		while i<1000000000:
+
+			self.time_start_a = time.time()		
+
+			self.get_position_joints_PSM()
+			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+
+			Z_desired_2 = self.z_fk	
+			force_raw_now = self.position_loop(goal_x, goal_y, start, Z_desired_2)
 
 			count = count + 1
 			if count < window_size + 1:
@@ -473,8 +684,8 @@ class Cartesian_control:
 				self.force = sum / window_size
 				sum = 0
 			
-			error = self.force_const - self.force
-			e_rel = error/self.force_const
+			error = self.force_const - self.force[2]
+			self.e_rel = error/self.force_const
 			self.P_value = (self.Kp * error)
 		
 			self.Integrator = self.Integrator + error
@@ -483,143 +694,15 @@ class Cartesian_control:
 		
 			PID = self.P_value + self.I_value 
 
-			self.get_position_joints_PSM()
-			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-			#X_desired_2 = self.x_fk
-			#Y_desired_2 = self.y_fk
-			Z_desired_2 = self.z_fk
+			
 			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
 
-			#INTERNAL BLOCK
+			i = i+1
+
+
 			
-			self.inverse_kinematics(X_desired, Y_desired, Z_desired_2)
-			self.jacobian(self.q1, self.q2, self.q3)
+
 			
-			if self.flag_first_pos == True:
-				self.set_position_robot(self.q1, self.q2, self.q3)
-				time.sleep(0.1)
-				self.get_position_joints_PSM()
-				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-				self.flag_first_pos = False
-				
-			if self.flag_first_pos == False:
-				delta_cart = [0, 0, 0]
-				delta_q = [0, 0, 0]
-				delta_cart[0] = X_desired-self.x_fk
-				delta_cart[1] = Y_desired-self.y_fk
-				delta_cart[2] = Z_desired_2-self.z_fk
-				#print(delta_cart)
-				invJ = np.linalg.inv(self.jac) 
-				delta_q = invJ.dot(delta_cart)
-				self.q1 = self.q1 + delta_q[0]
-				self.q2 = self.q2 + delta_q[1]
-				self.q3 = self.q3 + delta_q[2]
-				self.set_position_robot(self.q1, self.q2, self.q3)
-				time.sleep(0.1)
-				self.get_position_joints_PSM()
-				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-				
-			if self.update_pos == False:
-				print(self.force)
-				if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
-					self.count_mi_loop = self.count_mi_loop + 1
-					print("waiting...", self.count_mi_loop)
-				if self.count_mi_loop == 10:
-					count_mi_loop = 0
-					
-					self.update_pos = True
-
-				self.graph_f = np.append(self.graph_f, self.force)
-				self.graph_fd = np.append(self.graph_fd, self.force_const)
-				self.count_time()
-				self.error_force = np.append(self.error_force, e_rel)
-				self.count_time_ef()
-				self.graph_px = np.append(self.graph_px, X_desired)
-				self.graph_py = np.append(self.graph_py, Y_desired)
-
-				fr_x,_,_ = psm_handle_mi.get_force()
-				#fr_x = psm_handle_mi.get_force()
-				self.fr_x = np.append(self.fr_x, fr_x)
-				_,fr_y,_ = psm_handle_mi.get_force()
-				#fr_y = psm_handle_mi.get_force()
-				self.fr_y = np.append(self.fr_y, fr_y)
-				_,_,fr_z = psm_handle_mi.get_force()
-				#fr_z = psm_handle_mi.get_force()
-				self.fr_z = np.append(self.fr_z, fr_z)
-
-				#ex = (X_desired-self.x_fk)/X_desired
-				ex = 0
-				self.er_x = np.append(self.er_x, ex)
-				#ey = (Y_desired-self.y_fk)/Y_desired
-				ey = 0
-				self.er_y = np.append(self.er_y, ey)
-				#ez = (Z_desired_2-self.z_fk)/Z_desired_2
-				ez = 0
-				self.er_z = np.append(self.er_z, ez)
-				
-			if self.update_pos == True:
-				print(self.force, self.force_const)
-
-				if goal_x >= posx_start:
-					if goal_x > X_desired:
-						X_desired = X_desired + dx
-					else:
-						stop_x = True
-				if goal_x < posx_start:
-					if goal_x < X_desired:
-						X_desired = X_desired - dx
-					else:
-						stop_x = True
-
-				if goal_y >= posy_start:
-					if goal_y > Y_desired:
-						Y_desired = Y_desired + dy
-					else:
-						stop_y = True
-				if goal_y < posy_start:
-					if goal_y < Y_desired:
-						Y_desired = Y_desired - dy
-					else:
-						stop_y = True
-
-				self.graph_f = np.append(self.graph_f, self.force)
-				self.graph_fd = np.append(self.graph_fd, self.force_const)
-				self.count_time()
-				self.error_force = np.append(self.error_force, e_rel)
-				self.count_time_ef()
-				self.graph_px = np.append(self.graph_px, X_desired)
-				self.graph_py = np.append(self.graph_py, Y_desired)
-
-				fr_x,_,_ = psm_handle_mi.get_force()
-				#fr_x = psm_handle_mi.get_force()
-				self.fr_x = np.append(self.fr_x, fr_x)
-				_,fr_y,_ = psm_handle_mi.get_force()
-				#fr_y = psm_handle_mi.get_force()
-				self.fr_y = np.append(self.fr_y, fr_y)
-				_,_,fr_z = psm_handle_mi.get_force()
-				#fr_z = psm_handle_mi.get_force()
-				self.fr_z = np.append(self.fr_z, fr_z)
-
-				ex = (X_desired-self.x_fk)#/X_desired
-				self.er_x = np.append(self.er_x, ex)
-				ey = (Y_desired-self.y_fk)#/Y_desired
-				self.er_y = np.append(self.er_y, ey)
-				ez = (Z_desired_2-self.z_fk)#/Z_desired_2
-				self.er_z = np.append(self.er_z, ez)
-				self.update_pos = True
-
-				self.update_pos = True
-				
-			print("\n")
-			print(X_desired)
-			print(Y_desired)
-			print("\n")
-						
-			#self.count_step = self.count_step + 1
-			#vec_step = np.append(vec_step, count_step)
-
-		self.flag_first_pos = True	
-		self.update_pos == False
 
 	def temp(self, g1, g2, g3):
 		
@@ -1034,16 +1117,11 @@ def main():
 	cart_c.reach_pos_XY(0.01, 0.02, True)
 	cart_c.reach_pos_XY(-0.01, 0.04, False)
 	cart_c.reach_pos_XY(0.02, 0.02, False)
-	
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
 	#begin = True
 	#cart_c.exert_sin_force(m_start, 0, 0, begin)
 	#cart_c.exert_sin_force1(m_start)
-	'''
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.06, True)
-	'''
 
 
 	

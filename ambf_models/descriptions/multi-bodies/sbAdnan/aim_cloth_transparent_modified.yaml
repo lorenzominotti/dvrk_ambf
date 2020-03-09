@@ -24,13 +24,13 @@ BODY aim-cloth:
     orientation: {p: 0, r: 0, y: 0}
     position: {x: 0.0, y: 0.0, z: 0.0}
   color: green
-  config: {
-    #kLST: 0.05, 
-    kLST: 0.5,
+  config: { 
+    kLST: 0.3,
+#    kLST: 0.3,
     # kAST: 0.5,
     kDP: 0.8,
-    # kDF: 0.5,
     kMT: 0.08,
+#   kMT: 0.008,
     piterations: 2,
     # bending constraint: 2,
     # kPR: 2,

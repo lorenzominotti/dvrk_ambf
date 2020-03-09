@@ -112,8 +112,8 @@ graph_Ival = 0
 graph_Dval = 0
 
 #force_const_max = 5
-force_const_max = 5
-force_const_min = 1
+force_const_max = 2
+force_const_min = 0.5
 Kp = 0.005
 Ki = 0.0005
 #Kd = 0.00005

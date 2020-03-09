@@ -3975,7 +3975,7 @@ void afResistanceSensor::updateSensor(){
 
             getSensedRigidBody()->applyCentralForce(Fw);
             getSensedRigidBody()->applyTorque(Tau_bINw);
-            cout << "\n\n\n\nCIAOOOOOOOOOOOOOOOOOOOOOOOOOOO\n\n\n\n";
+            
             
         }
 

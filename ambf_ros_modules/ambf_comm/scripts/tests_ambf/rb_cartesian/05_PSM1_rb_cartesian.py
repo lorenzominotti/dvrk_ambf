@@ -64,6 +64,7 @@ class Cartesian_control:
 	vec_step = []
 	force1 = []
 	force_vect = []
+	graph_fd = []
 
 	degree = 0
 	delta = 0.6 
@@ -164,6 +165,7 @@ class Cartesian_control:
 
 	def plots(self):
 		plt.plot(self.graph_f, color = 'r')
+		plt.plot(self.graph_fd, color = 'b')
 		#plt.plot(graph_d, color = 'g')
 		plt.grid()
 		plt.show()
@@ -205,6 +207,7 @@ class Cartesian_control:
 			force_old2 = force_old1
 			force_old1 = self.force
 			self.graph_f = np.append(self.graph_f, self.force)
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			PID = 1
 			self.graph_frn = np.append(self.graph_frn, force_raw_now)
 			self.graph_m = np.append(self.graph_m, self.m)
@@ -296,6 +299,8 @@ class Cartesian_control:
 			#Y_desired_2 = self.y_fk
 			Z_desired_2 = self.z_fk
 			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
+
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
 
 			#INTERNAL BLOCK
 			

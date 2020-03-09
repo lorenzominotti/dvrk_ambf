@@ -46,14 +46,18 @@ class Joint_control:
 	vec_step = []
 	force1 = []
 	force_vect = []
+	error_force = []
+	error_pos = []
 
 	degree = 0
-	delta = 0.6
-	m = 0 
+	delta = 0.6 
 	delta_m = 0.00005
 	delta_m_start = 0.00005
 	band = 0.03
+	band2 = 0.5
 	limit_mi = 0.30
+	update_pos = False
+	e_rel = 0
 
 	f_inv = 0.01
 
@@ -65,28 +69,62 @@ class Joint_control:
 	graph_posZ = []
 	graph_posX = []
 	graph_posY = []
-	posx_start0 = 0
-	posy_start0 = 0
+	graph_fd = []
 	posX = 0
 	posY = 0
 	posZ = 0
+	pi = math.pi
+	l_RCC = 0.4318
+	l_tool_original = 0.4162
+	l_tool = 0.05 + l_tool_original
 
-	force_const = 2
+	Kp_start = 0.000001
+	Ki_start = 0.000001
 
-	#Kp = 0.0065
-	#Ki = 0.0005
+	amplitude = 0.3
 
-	Kp = 0.00005
-	#Ki = 0.000005
-	Ki = 0.00005
+	force_const = 1.8-amplitude
+
+	deltat_a = 0
+	time = []
+	deltat_a_ef = 0
+	time_ef = []
 
 	Integrator = 0
 	Derivator = 0
 	time_now = 0
+
+	flag_first_pos = True
+
+	
+	'''
+	Kp = 0.002
+	Ki = 0.00005
+	#Kd = 0.00008
+    '''
+	#Kp = 0.002
+	#Ki = 0.0001
+	#Kd = 0.00008
+
+
+	
+	'''
+	Kp = 0.002
+	Ki = 0.00005
+	#Kd = 0.00008
+    '''
+	Kp = 0.003
+	Ki = 0.00005
+	#Kd = 0.00008
+
+	Integrator = 0
+	Derivator = 0
+	time_now = 0
+
+	flag_first_pos = True
 	
 	def __init__(self):
 		pass
-
 
 	def approach_goal_Z(self, m_start):
 		self.m = m_start
@@ -94,6 +132,7 @@ class Joint_control:
 		force_old1 = 0
 		while self.m < self.limit_mi:
 			
+			self.time_start_a = time.time()
 			force_raw_now = psm_handle_mi.get_force()
 			self.force = force_raw_now
 			print(self.force)
@@ -113,13 +152,16 @@ class Joint_control:
 
 			if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
 				self.count_mi_loop = self.count_mi_loop + 1
-			if self.count_mi_loop == 50:
+			if self.count_mi_loop == 10:
 				break
 			
 			psm_handle_pel.set_joint_pos(0, self.m)
 			force_old2 = force_old1
 			force_old1 = self.force
 			self.graph_f = np.append(self.graph_f, self.force)
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
+			self.error_force = np.append(self.error_force, 0)
+			self.count_time_ef()
 			PID = 1
 			self.graph_frn = np.append(self.graph_frn, force_raw_now)
 			self.graph_m = np.append(self.graph_m, self.m)
@@ -128,6 +170,7 @@ class Joint_control:
 			self.graph_posZ = np.append(self.graph_posZ, self.posZ)
 			self.posX =  pos.x
 			self.posY =  pos.y
+			self.count_time()
 
 
 	def reach_pos_XY(self, goal_x, goal_y, start):
@@ -183,9 +226,11 @@ class Joint_control:
 		stop_x = False
 		stop_y = False
 
+
 		while (stop_x == False) or (stop_y == False):
 			
 			#print(step)
+			self.time_start_a = time.time()	
 			pos_tool = psm_handle_trl.get_pos()
 			px = pos_tool.x
 			py = pos_tool.y
@@ -208,6 +253,7 @@ class Joint_control:
 				sum = 0
 			
 			error = self.force_const - self.force
+			e_rel = error/self.force_const
 			P_value = (self.Kp * error)
 
 			#D_value = Kd * (error - Derivator)
@@ -223,7 +269,7 @@ class Joint_control:
 			
 			psm_handle_pel.set_joint_pos(0, self.m)
 
-			print(px-self.posx_start0, py-self.posy_start0, pz-self.posz_start0)
+			#print(px-self.posx_start0, py-self.posy_start0, pz-self.posz_start0)
 			if target_x >= posx_start:
 				if target_x > px:
 					self.degree_base = self.degree_base - dx
@@ -251,7 +297,16 @@ class Joint_control:
 					stop_y = True			
 
 
+			print(self.force)
+			#pos_x = px-self.posx_start0
+			self.graph_px = np.append(self.graph_px, pos_x)
+			#pos_y = py-self.posy_start0
+			self.graph_py = np.append(self.graph_py, pos_y)
 			self.graph_f = np.append(self.graph_f, self.force)
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
+			self.count_time()
+			self.error_force = np.append(self.error_force, e_rel)
+			self.count_time_ef()
 
 			pos = psm_handle_trl.get_pos()
 			#posZ =  pos.z
@@ -264,19 +319,35 @@ class Joint_control:
 			#self.count_step = self.count_step + 1
 			#self.vec_step = np.append(self.vec_step, self.count_step)	
 	
+	def count_time(self):
+		time_end_a = time.time()
+		self.deltat_a = (time_end_a-self.time_start_a) + self.deltat_a 
+		self.time = np.append(self.time, self.deltat_a)
+
+	def count_time_ef(self):
+		time_end_a_ef = time.time()
+		self.deltat_a_ef = (time_end_a_ef-self.time_start_a) + self.deltat_a_ef 
+		self.time_ef = np.append(self.time_ef, self.deltat_a_ef)
 
 	def plots(self):
-		plt.plot(self.graph_f, color = 'r')
-		#plt.plot(graph_d, color = 'g')
-		plt.grid()
-		plt.show()
+		time = []
+		time = self.time
+		time_ef = []
+		time_ef = self.time_ef
 
-		plt.plot(self.graph_posX)
-		plt.plot(self.graph_posY)
-		#plt.plot(graph_d, color = 'g')
-		plt.grid()
+		fig, axs = plt.subplots(nrows = 2)
+		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
+		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
+		#axs[0].set(xlabel = 'Time [s]', ylabel = 'Force [N]')	
+		axs[0].set(ylabel = 'Force [N]')	
+		axs[0].legend(loc='best')
+		axs[0].grid()
+	
+		axs[1].plot(time, self.error_force, color = 'r', label = "error")
+		axs[1].set(xlabel = 'Time [s]', ylabel = 'Force_error_norm')
+		axs[1].legend(loc='best')
+		axs[1].grid()
 		plt.show()
-
 
 
 def main():
@@ -329,12 +400,10 @@ def main():
 	psm_handle_pel.set_joint_pos(0, math.radians(0))
 	#psm_handle_tyl.set_joint_pos(1, math.radians(-20))
 	#time.sleep(1)
-	
+	time.sleep(1)
 	joint_c = Joint_control()
+	'''
 	joint_c.approach_goal_Z(m_start)
-
-	print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
 	joint_c.reach_pos_XY(0.01, 0.02, True)
 	print('STEP1')
 	time.sleep(2)
@@ -343,7 +412,13 @@ def main():
 	time.sleep(2)
 	joint_c.reach_pos_XY(0.03, 0.02, False)
 	print('STEP3')
-	time.sleep(5)	
+	time.sleep(5)
+	'''
+	joint_c.approach_goal_Z(m_start)
+	joint_c.reach_pos_XY(0.01, 0.02, True)
+	joint_c.reach_pos_XY(-0.01, 0.04, False)
+	joint_c.reach_pos_XY(0.02, 0.02, False)
+	joint_c.reach_pos_XY(0.0, 0.0, False)	
 	joint_c.plots()
 
 

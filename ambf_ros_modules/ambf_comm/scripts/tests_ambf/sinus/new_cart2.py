@@ -93,7 +93,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 1.5-amplitude
+	force_const = 1.0-amplitude
 
 	deltat_a = 0
 	time = []
@@ -235,10 +235,9 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
 		
-				
-		fig, axs = plt.subplots(nrows = 6)
+		
+		fig, axs = plt.subplots(nrows = 5)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -247,35 +246,28 @@ class Cartesian_control:
 		axs[0].grid()
 
 		axs[1].plot(time, self.error_force, color = 'r', label = "error")
-		axs[1].set(ylabel = 'Force_error_norm')
+		axs[1].set(ylabel = 'Force_error %')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
 		axs[2].plot(time, self.er_x, label = "err_posx")
-		axs[2].set(ylabel = 'pox_error [m]')
+		axs[2].set(ylabel = 'pox_error %')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
 		axs[3].plot(time, self.er_y, label = "err_posy")
-		axs[3].set(ylabel = 'posy_error [m]')
+		axs[3].set(ylabel = 'posy_error %')
 		axs[3].legend(loc='best')
 		axs[3].grid()
 
 		axs[4].plot(time, self.er_z, label = "err_posz")
-		axs[4].set(ylabel = 'posz_error [m]')
+		axs[4].set(ylabel = 'posz_error %')
 		axs[4].set(xlabel = 'Time [s]')	
 		axs[4].legend(loc='best')
 		axs[4].grid()
-
-		axs[5].plot(time, self.graph_px, label = "posx")
-		axs[5].plot(time, self.graph_py, label = "posy")
-		axs[5].set(ylabel = 'position xy [m]')
-		axs[5].set(xlabel = 'Time [s]')	
-		axs[5].legend(loc='best')
-		axs[5].grid()
-
+	
 		plt.show()
-		'''
+		
 		fig, axs = plt.subplots(nrows = 2)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -293,7 +285,7 @@ class Cartesian_control:
 		axs[1].grid()
 		plt.show()
 
-
+		'''
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -314,8 +306,8 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
-
+		
+	
 	def plot_sin(self):
 		time = []
 		time = self.time
@@ -436,7 +428,7 @@ class Cartesian_control:
 			path_long = path_y
 			path_short = path_x
 
-		d_step_long = 0.0001
+		d_step_long = 0.001
 		d_step_short = (path_short / path_long) * d_step_long
 		if path_x >= path_y:
 			dx = d_step_long
@@ -505,19 +497,38 @@ class Cartesian_control:
 			if self.flag_first_pos == False:
 				delta_cart = [0, 0, 0]
 				delta_q = [0, 0, 0]
+				dq = [0, 0, 0]
 				delta_cart[0] = X_desired-self.x_fk
 				delta_cart[1] = Y_desired-self.y_fk
 				delta_cart[2] = Z_desired_2-self.z_fk
 				#print(delta_cart)
 				invJ = np.linalg.inv(self.jac) 
+				
+				Kpx = 1.5
+				Kix = 1		
+				self.P_value = (Kpx * delta_cart[0])		
+				self.Integrator = self.Integrator + delta_cart[0]
+				self.I_value = self.Integrator * Kix		
+				PID = self.P_value + self.I_value 
+				dq[0] = delta_cart[0] + PID*delta_cart[0]
+
+				Kpy = 1.5
+				Kiy = 1		
+				self.P_value = (Kpy * delta_cart[1])		
+				self.Integrator = self.Integrator + delta_cart[1]
+				self.I_value = self.Integrator * Kiy		
+				PID = self.P_value + self.I_value 
+				dq[1] = delta_cart[1] + PID*delta_cart[1]
+
 				delta_q = invJ.dot(delta_cart)
-				self.q1 = self.q1 + delta_q[0]
-				self.q2 = self.q2 + delta_q[1]
-				self.q3 = self.q3 + delta_q[2]
+				self.q1 = self.q1 + dq[0]
+				self.q2 = self.q2 + dq[1]
+				self.q3 = self.q3 + dq[2]
 				self.set_position_robot(self.q1, self.q2, self.q3)
 				time.sleep(0.1)
 				self.get_position_joints_PSM()
 				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				#self.update_pos == True
 				
 			if self.update_pos == False:
 				print(self.force)
@@ -602,13 +613,12 @@ class Cartesian_control:
 
 				ex = (X_desired-self.x_fk)#/X_desired
 				self.er_x = np.append(self.er_x, ex)
-				ey = (Y_desired-self.y_fk)#/Y_desired
+				ey = (Y_desired-self.y_fk)/Y_desired
 				self.er_y = np.append(self.er_y, ey)
-				ez = (Z_desired_2-self.z_fk)#/Z_desired_2
+				ez = (Z_desired_2-self.z_fk)/Z_desired_2
 				self.er_z = np.append(self.er_z, ez)
 				self.update_pos = True
 
-				self.update_pos = True
 				
 			print("\n")
 			print(X_desired)
@@ -1034,16 +1044,11 @@ def main():
 	cart_c.reach_pos_XY(0.01, 0.02, True)
 	cart_c.reach_pos_XY(-0.01, 0.04, False)
 	cart_c.reach_pos_XY(0.02, 0.02, False)
-	
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
 	#begin = True
 	#cart_c.exert_sin_force(m_start, 0, 0, begin)
 	#cart_c.exert_sin_force1(m_start)
-	'''
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.06, True)
-	'''
 
 
 	

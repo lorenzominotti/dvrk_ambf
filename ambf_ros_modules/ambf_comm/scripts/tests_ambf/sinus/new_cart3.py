@@ -235,10 +235,9 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
 		
-				
-		fig, axs = plt.subplots(nrows = 6)
+		
+		fig, axs = plt.subplots(nrows = 5)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -247,33 +246,26 @@ class Cartesian_control:
 		axs[0].grid()
 
 		axs[1].plot(time, self.error_force, color = 'r', label = "error")
-		axs[1].set(ylabel = 'Force_error_norm')
+		axs[1].set(ylabel = 'Force_error %')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
 		axs[2].plot(time, self.er_x, label = "err_posx")
-		axs[2].set(ylabel = 'pox_error [m]')
+		axs[2].set(ylabel = 'pox_error %')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
 		axs[3].plot(time, self.er_y, label = "err_posy")
-		axs[3].set(ylabel = 'posy_error [m]')
+		axs[3].set(ylabel = 'posy_error %')
 		axs[3].legend(loc='best')
 		axs[3].grid()
 
 		axs[4].plot(time, self.er_z, label = "err_posz")
-		axs[4].set(ylabel = 'posz_error [m]')
+		axs[4].set(ylabel = 'posz_error %')
 		axs[4].set(xlabel = 'Time [s]')	
 		axs[4].legend(loc='best')
 		axs[4].grid()
-
-		axs[5].plot(time, self.graph_px, label = "posx")
-		axs[5].plot(time, self.graph_py, label = "posy")
-		axs[5].set(ylabel = 'position xy [m]')
-		axs[5].set(xlabel = 'Time [s]')	
-		axs[5].legend(loc='best')
-		axs[5].grid()
-
+	
 		plt.show()
 		'''
 		fig, axs = plt.subplots(nrows = 2)
@@ -314,7 +306,7 @@ class Cartesian_control:
 		axs[2].grid()
 
 		plt.show()
-		'''
+		
 
 	def plot_sin(self):
 		time = []
@@ -518,6 +510,7 @@ class Cartesian_control:
 				time.sleep(0.1)
 				self.get_position_joints_PSM()
 				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
+				#self.update_pos == True
 				
 			if self.update_pos == False:
 				print(self.force)
@@ -602,9 +595,9 @@ class Cartesian_control:
 
 				ex = (X_desired-self.x_fk)#/X_desired
 				self.er_x = np.append(self.er_x, ex)
-				ey = (Y_desired-self.y_fk)#/Y_desired
+				ey = (Y_desired-self.y_fk)/Y_desired
 				self.er_y = np.append(self.er_y, ey)
-				ez = (Z_desired_2-self.z_fk)#/Z_desired_2
+				ez = (Z_desired_2-self.z_fk)/Z_desired_2
 				self.er_z = np.append(self.er_z, ez)
 				self.update_pos = True
 
@@ -1034,16 +1027,11 @@ def main():
 	cart_c.reach_pos_XY(0.01, 0.02, True)
 	cart_c.reach_pos_XY(-0.01, 0.04, False)
 	cart_c.reach_pos_XY(0.02, 0.02, False)
-	
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
 	#begin = True
 	#cart_c.exert_sin_force(m_start, 0, 0, begin)
 	#cart_c.exert_sin_force1(m_start)
-	'''
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.06, True)
-	'''
 
 
 	

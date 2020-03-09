@@ -74,7 +74,9 @@ time.sleep(1)
 #time.sleep(1)
 #psm_handle_tyl.set_joint_pos(1, math.radians(-20))
 #time.sleep(1)
+
 graph_f = []
+graph_fd = []
 graph_d = []
 graph_PID = []
 graph_m = []
@@ -107,21 +109,52 @@ graph_Pval = 0
 graph_Ival = 0
 graph_Dval = 0
 
-force_const = 6
-#Kp = 0.0008
-Kp = 0.0005
-#Ki = 0.0001
-Ki = 0.00001
-Kd = 0.00008
+force_const = 4
+Kd = 0
 Integrator = 0
 Derivator = 0
 count = 0
 window = []
 window_size = 10
 sum = 0
+force_raw = []
+graph_f = []
+graph_m = []
+vec_step = []
+force1 = []
+force_vect = []
+error_force = []
+error_pos = []
+
+
+
+deltat_a = 0
+time1 = []
+deltat_a_ef = 0
+time_ef = []
+
+Integrator = 0
+Derivator = 0
+time_now = 0
+
+flag_first_pos = True
+
+'''
+Kp = 0.01 #stiffer
+Ki = 0.00005
+#Kd = 0.00008
+'''
+
+Kp = 0.002
+Ki = 0.00005
+
+Integrator = 0
+Derivator = 0
+time_now = 0
 
 while m < limit_mi:
 
+	time_start_a = time.time()
 	force_raw_now = psm_handle_mi.get_force()
 	#force = force_raw_now
 	print(force_raw_now)
@@ -160,7 +193,6 @@ while m < limit_mi:
 	psm_handle_pel.set_joint_pos(0, m)
 	force_old2 = force_old1
 	force_old1 = force
-	graph_f = np.append(graph_f, force)
 	graph_d = np.append(graph_d, degree)
 	PID = 1
 	graph_PID = np.append(graph_PID, PID)
@@ -169,35 +201,25 @@ while m < limit_mi:
 	graph_Dval = np.append(graph_Dval, D_value)
 	graph_m = np.append(graph_m, m)
 	graph_frn = np.append(graph_frn, force_raw_now)
-	time_old = time_now
-	time_now = time.time()
-	time_s = time_now - time_old
-	freq = 1/time_s
-	graph_freq = np.append(graph_freq, freq)
+	graph_f = np.append(graph_f, force)
+	graph_fd = np.append(graph_fd, force_const)
+	error_force = np.append(error_force, 0)
+	time_end_a_ef = time.time()
+	deltat_a_ef = (time_end_a_ef-time_start_a) + deltat_a_ef 
+	time_ef = np.append(time_ef, deltat_a_ef)
+	time_end_a = time.time()
+	deltat_a = (time_end_a-time_start_a) + deltat_a 
+	time1 = np.append(time1, deltat_a)
 	time.sleep(f_inv)
-	
-	#print(force)
-	#print("\n")
-	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
-	#graph = np.append(graph,maF[5])
-print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
+print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 while degree < 15:
 
+	time_start_a = time.time()
 	psm_handle_pfl.set_joint_pos(0, math.radians(-degree))
 	force_raw_now = psm_handle_mi.get_force()
 	print(force)
-	#force_read = psm_handle_mi.get_force()
-	#average = (force_old2 + force_old1)/2
-	#if force_old2 != force_old1 and force_old2 != force_read:
-	#if(force_read > (average + delta)) or (force_read < (average - delta)):
-		#force = force_old1
-		#print('\n')
-		#print('UNEXPECTED_PEAK..........COMPENSATION')
-		#print('\n')
-	#else:
-		#force = force_read
 
 	count = count + 1
 	if count < window_size + 1:
@@ -213,16 +235,13 @@ while degree < 15:
 		sum = 0
 
 	error = force_const - force
+	er = error/force_const
 	P_value = (Kp * error)
 
 	D_value = Kd * (error - Derivator)
 	Derivator = error
 	Integrator = Integrator + error
 
-	#if Integrator > Integrator_max:
-		#Integrator = Integrator_max
-	#elif Integrator < Integrator_min:
-		#Integrator = Integrator_min
 	I_value = Integrator * Ki
 
 	PID = P_value + I_value + D_value
@@ -230,26 +249,7 @@ while degree < 15:
 	#if force > (force_const + band):
 	m = m + PID*m
     #psm_handle_pel.set_joint_pos(0, m)
-	#if force < (force_const - band):
-	    #m = m - PID * m
 	psm_handle_pel.set_joint_pos(0, m)
-	'''
-	if abs(force-force_const) > 1.5:
-		k_corr = 4
-	if abs(force-force_const) > 1 and abs(force-force_const) < 1.5:
-		k_corr = 3
-	if abs(force-force_const) > 0.8 and abs(force-force_const) < 1:
-		k_corr = 2
-	if abs(force-force_const) > 0.6 and abs(force-force_const) < 0.8:
-		k_corr = 1
-
-	if force > (force_const + band2):
-		m = m - k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	if force < (force_const - band):
-		m = m + k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	'''
 
 	#if (force < (force_const + band2)) and (force > (force_const - band2)):
 		#degree = degree + delta_degree
@@ -257,7 +257,6 @@ while degree < 15:
 
 	force_old2 = force_old1
 	force_old1 = force
-	graph_f = np.append(graph_f, force)
 	graph_d = np.append(graph_d, degree)
 	graph_PID = np.append(graph_PID, PID)
 	graph_Pval = np.append(graph_Pval, P_value)
@@ -273,27 +272,26 @@ while degree < 15:
 	#print(force)
 	#print("\n")
 	#degree = degree + delta_degree
-	time.sleep(f_inv)	
+	time.sleep(f_inv)
+	graph_f = np.append(graph_f, force)
+	graph_fd = np.append(graph_fd, force_const)
+	error_force = np.append(error_force, er)
+	time_end_a_ef = time.time()
+	deltat_a_ef = (time_end_a_ef-time_start_a) + deltat_a_ef 
+	time_ef = np.append(time_ef, deltat_a_ef)
+	time_end_a = time.time()
+	deltat_a = (time_end_a-time_start_a) + deltat_a 
+	time1 = np.append(time1, deltat_a)	
 	#print(time_now-time_old)
 	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
 	#graph = np.append(graph,maF[5])
-'''
-count = 0
-while degree > (0):
 
+while degree > 0:
+
+	time_start_a = time.time()
 	psm_handle_pfl.set_joint_pos(0, math.radians(-degree))
-	#force_read = psm_handle_mi.get_force()
-	#average = (force_old3 + force_old2 + force_old1)/3
-	#if force_old2 != force_old1 and force_old2 != force_read:
-	#if(force_read > (average + delta)) or (force_read < (average - delta)):
-		#force = force_old1
-		#print('\n')
-		#print('UNEXPECTED_PEAK..........COMPENSATION')
-		#print('\n')
-	#else:
-		#force = force_read
-
 	force_raw_now = psm_handle_mi.get_force()
+	print(force)
 
 	count = count + 1
 	if count < window_size + 1:
@@ -309,29 +307,28 @@ while degree > (0):
 		sum = 0
 
 	error = force_const - force
+	er = error/force_const
 	P_value = (Kp * error)
 
 	D_value = Kd * (error - Derivator)
 	Derivator = error
-
 	Integrator = Integrator + error
 
 	I_value = Integrator * Ki
 
 	PID = P_value + I_value + D_value
-
+	
+	#if force > (force_const + band):
 	m = m + PID*m
-
+    #psm_handle_pel.set_joint_pos(0, m)
 	psm_handle_pel.set_joint_pos(0, m)
 
-	if (force < (force_const + band2)) and (force > (force_const - band2)):
-		degree = degree - delta_degree	
-	#degree = degree - delta_degree
+	#if (force < (force_const + band2)) and (force > (force_const - band2)):
+		#degree = degree + delta_degree
+	degree = degree - delta_degree
 
-	force_old3 = force_old2
 	force_old2 = force_old1
 	force_old1 = force
-	graph_f = np.append(graph_f, force)
 	graph_d = np.append(graph_d, degree)
 	graph_PID = np.append(graph_PID, PID)
 	graph_Pval = np.append(graph_Pval, P_value)
@@ -344,133 +341,44 @@ while degree > (0):
 	time_s = time_now - time_old
 	freq = 1/time_s
 	graph_freq = np.append(graph_freq, freq)
-
-	print(force)
-	#print(degree)
-	#print(m)
-	#print("\n")
-	time.sleep(f_inv)	
-	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
-	#graph = np.append(graph,maF[5])
-
-while degree < 20:
-
-	psm_handle_pfl.set_joint_pos(0, math.radians(-degree))
-	force = psm_handle_mi.get_force()
-	print(force)
-	force_read = psm_handle_mi.get_force()
-	average = (force_old2 + force_old1)/2
-	#if force_old2 != force_old1 and force_old2 != force_read:
-	if(force_read > (average + delta)) or (force_read < (average - delta)):
-		force = force_old1
-		print('\n')
-		print('UNEXPECTED_PEAK..........COMPENSATION')
-		print('\n')
-	#else:
-		#force = force_read
-
-	if abs(force-force_const) > 1.5:
-		k_corr = 4
-	if abs(force-force_const) > 1 and abs(force-force_const) < 1.5:
-		k_corr = 3
-	if abs(force-force_const) > 0.8 and abs(force-force_const) < 1:
-		k_corr = 2
-	if abs(force-force_const) > 0.6 and abs(force-force_const) < 0.8:
-		k_corr = 1
-
-	if force > (force_const + band2):
-		m = m - k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	if force < (force_const - band):
-		m = m + k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-
-	if (force < (force_const + band2)) and (force > (force_const - band2)):
-		degree = degree + delta_degree
-
-	force_old2 = force_old1
-	force_old1 = force
-	graph_f = np.append(graph_f, force)
-	graph_d = np.append(graph_d, degree)
 	#print(force)
 	#print("\n")
 	#degree = degree + delta_degree
-	time.sleep(0.1)	
-	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
-	#graph = np.append(graph,maF[5])
-
-
-while degree > (-20):
-
-	psm_handle_pfl.set_joint_pos(0, math.radians(-degree))
-	force_read = psm_handle_mi.get_force()
-	average = (force_old3 + force_old2 + force_old1)/3
-	if force_old2 != force_old1 and force_old2 != force_read:
-		if(force_read > (average + delta)) or (force_read < (average - delta)):
-			force = force_old1
-			print('\n')
-			print('UNEXPECTED_PEAK..........COMPENSATION')
-			print('\n')
-	else:
-		force = force_read
-
-
-	if abs(force-force_const) > 1.5:
-		k_corr = 4
-	if abs(force-force_const) > 1 and abs(force-force_const) < 1.5:
-		k_corr = 3
-	if abs(force-force_const) > 0.8 and abs(force-force_const) < 1:
-		k_corr = 2
-	if abs(force-force_const) > 0.6 and abs(force-force_const) < 0.8:
-		k_corr = 1
-
-	if force > (force_const + band2):
-		m = m - k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-	if force < (force_const - band):
-		m = m + k_corr*delta_m
-		psm_handle_pel.set_joint_pos(0, m)
-
-	if (force < (force_const + band2)) and (force > (force_const - band2)):
-		degree = degree - delta_degree
-
-	force_old3 = force_old2
-	force_old2 = force_old1
-	force_old1 = force
+	time.sleep(f_inv)
 	graph_f = np.append(graph_f, force)
-	graph_d = np.append(graph_d, degree)
-
-	print(force)
-	#print(degree)
-	#print(m)
-	#print("\n")
-	time.sleep(0.1)	
+	graph_fd = np.append(graph_fd, force_const)
+	error_force = np.append(error_force, er)
+	time_end_a_ef = time.time()
+	deltat_a_ef = (time_end_a_ef-time_start_a) + deltat_a_ef 
+	time_ef = np.append(time_ef, deltat_a_ef)
+	time_end_a = time.time()
+	deltat_a = (time_end_a-time_start_a) + deltat_a 
+	time1 = np.append(time1, deltat_a)	
+	#print(time_now-time_old)
 	#maF = np.convolve(force, np.ones((N,))/N, mode='valid')*10000
 	#graph = np.append(graph,maF[5])
 
-'''
-'''
-plt.plot(graph_m)
-plt.grid()
+
+time = []
+time = time1
+time_ef = []
+time_ef = time_ef
+
+fig, axs = plt.subplots(nrows = 2)
+axs[0].plot(time, graph_f, color = 'r', label = "actual force")
+axs[0].plot(time, graph_fd, color = 'b', label = "target force")
+#axs[0].set(xlabel = 'Time [s]', ylabel = 'Force [N]')	
+axs[0].set(ylabel = 'Force [N]')	
+axs[0].legend(loc='best')
+axs[0].grid()
+
+axs[1].plot(time, error_force, color = 'r', label = "error")
+axs[1].set(xlabel = 'Time [s]', ylabel = 'Force_error_norm')
+axs[1].legend(loc='best')
+axs[1].grid()
 plt.show()
-'''
-#plt.plot(graph_frn)
-plt.plot(graph_f, color = 'r')
-#plt.plot(graph_d, color = 'r')
-#plt.plot(graph_PID, color = 'g')
-plt.grid()
-plt.show()
-'''
-plt.plot(graph_PID, color = 'g')
-plt.plot(graph_Pval, color = 'b')
-plt.plot(graph_Ival, color = 'r')
-plt.plot(graph_Dval, color = 'y')
-plt.grid()
-plt.show()
-'''
-plt.plot(graph_d, color = 'r')
-plt.grid()
-plt.show()
+
+
 
 raw_input("Let's clean up. Press Enter to continue...")
 # Lastly to cleanup

@@ -84,6 +84,7 @@ class Cartesian_control:
 	graph_posZ = []
 	graph_posX = []
 	graph_posY = []
+	graph_fd = []
 	posX = 0
 	posY = 0
 	posZ = 0
@@ -123,8 +124,8 @@ class Cartesian_control:
 	Kp = 0.005 #stiffer
 	Ki = 0.000005
 	'''
-	Kp = 0.01 #stiffer
-	Ki = 0.000001
+	Kp = 0.005 #stiffer
+	Ki = 0.0000025
 	
 	def __init__(self):
 		pass
@@ -174,6 +175,7 @@ class Cartesian_control:
 
 	def plots(self):
 		plt.plot(self.graph_f, color = 'r')
+		plt.plot(self.graph_fd, color = 'b')
 		#plt.plot(graph_d, color = 'g')
 		plt.grid()
 		plt.show()
@@ -223,6 +225,7 @@ class Cartesian_control:
 			self.graph_posZ = np.append(self.graph_posZ, self.posZ)
 			self.posX =  pos.x
 			self.posY =  pos.y
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
 	
 	
 	def reach_pos_XY(self, goal_x, goal_y, start):
@@ -306,6 +309,8 @@ class Cartesian_control:
 			#Y_desired_2 = self.y_fk
 			Z_desired_2 = self.z_fk
 			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
+
+			self.graph_fd = np.append(self.graph_fd, self.force_const)
 
 			#INTERNAL BLOCK
 			
@@ -481,8 +486,9 @@ def main():
 	cart_c.reach_pos_XY(0.01, 0.02, True)
 	print("Change point!!!!!!!!")
 	cart_c.reach_pos_XY(0.03, -0.01, False)
-	#cart_c.reach_pos_XY(0.03, 0.02, False)
-	#cart_c.reach_pos_XY(0.0, -0.01, False)
+	cart_c.reach_pos_XY(0.03, 0.02, False)
+	cart_c.reach_pos_XY(0.0, -0.01, False)
+	#cart_c.reach_pos_XY(-0.2, 0.01, False)
 	'''
 	cart_c.approach_goal_Z(m_start)
 	cart_c.reach_pos_XY(0.01, 0.02, True)
