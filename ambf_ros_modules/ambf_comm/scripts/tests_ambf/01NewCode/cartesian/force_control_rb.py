@@ -40,9 +40,17 @@ psm_handle_tpl = _client.get_obj_handle('psm/toolpitchlink')
 psm_handle_tyl = _client.get_obj_handle('psm/toolyawlink')
 psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
-
+# fino a qua tutto uguale poi vedi funzione sotto
 class Cartesian_control:
 	
+	xd_plot = []
+	yd_plot = []
+	zd_plot = []
+	xr_plot = []
+	yr_plot = []
+	zr_plot = []
+	time_plot = []
+
 	force_raw = []
 	graph_f = []
 	force1 = []
@@ -61,7 +69,7 @@ class Cartesian_control:
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.00005
+	delta_m_start = 0.0001
 	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
@@ -73,9 +81,7 @@ class Cartesian_control:
 	D_value = 0
 	graph_frn = []
 	graph_fd = []
-	graph_posZ = []
-	graph_posX = []
-	graph_posY = []
+
 	posX = 0
 	posY = 0
 	posZ = 0
@@ -89,7 +95,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 1.5-amplitude
+	force_const = 3.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -103,12 +109,11 @@ class Cartesian_control:
 	flag_first_pos = True
 
 	'''
-	Kp = 0.008 #stiffer
-	Ki = 0.00008
+	Kp = 0.00005 #rqt_plot
+	Ki = 0.000003
 	'''
-
-	Kp = 0.005 #rqt_plot
-	Ki = 0.000001
+	Kp = 0.008 #rqt_plot
+	Ki = 0.0012
 
 	Integrator = 0
 	Integratorx = 0
@@ -128,9 +133,12 @@ class Cartesian_control:
 		
 		#self.q1 = 0.5*(math.acos((math.pow(Z_des,2)-math.pow(X_des,2))/(math.pow(X_des,2)+math.pow(Z_des,2))))   #original
 
-		self.q1 = math.asin((X_des)/(math.sqrt(math.pow(X_des,2)+math.pow(Z_des,2))))
-		self.q2 = math.asin(-Y_des/r)
-		self.q3 = self.l_RCC - self.l_tool + r
+		q1 = math.asin((X_des)/(math.sqrt(math.pow(X_des,2)+math.pow(Z_des,2))))
+		q2 = math.asin(-Y_des/r)
+		q3 = self.l_RCC - self.l_tool + r
+
+		return q1, q2, q3
+
 
 
 	def set_position_robot(self, q1_set, q2_set, q3_set):
@@ -144,16 +152,21 @@ class Cartesian_control:
 	def get_position_joints_PSM(self):
 		
 		#get the joint values of the robot from the simulation
-		self.q1_read = psm_handle_base.get_joint_pos(0)
-		self.q2_read = psm_handle_base.get_joint_pos(3)
-		self.q3_read = psm_handle_base.get_joint_pos(4)
+		q1_read = psm_handle_base.get_joint_pos(0)
+		q2_read = psm_handle_base.get_joint_pos(3)
+		q3_read = psm_handle_base.get_joint_pos(4)
+
+		return q1_read, q2_read, q3_read
 
 
 	def forward_kinematics(self, q1, q2, q3):
 
-		self.x_fk = math.cos(q2)*math.sin(q1)*(self.l_tool-self.l_RCC+q3)
-		self.y_fk = -math.sin(q2)*(self.l_tool-self.l_RCC+q3)
-		self.z_fk = -math.cos(q1)*math.cos(q2)*(self.l_tool-self.l_RCC+q3)
+		x_fk = math.cos(q2)*math.sin(q1)*(self.l_tool-self.l_RCC+q3)
+		y_fk = -math.sin(q2)*(self.l_tool-self.l_RCC+q3)
+		z_fk = -math.cos(q1)*math.cos(q2)*(self.l_tool-self.l_RCC+q3)
+
+		return x_fk, y_fk, z_fk
+
 
 	def jacobian(self, qj1, qj2, qj3):
 
@@ -167,6 +180,8 @@ class Cartesian_control:
 		self.jac[2,0] = math.cos(qj2)*math.sin(qj1)*(self.l_tool-self.l_RCC+qj3)
 		self.jac[2,1] = math.cos(qj1)*math.sin(qj2)*(self.l_tool-self.l_RCC+qj3) 
 		self.jac[2,2] = -math.cos(qj1)*math.cos(qj2)
+
+		return jac
 		
 
 	def count_time(self):
@@ -200,7 +215,7 @@ class Cartesian_control:
 		axs[1].grid()
 
 		axs[2].plot(time, self.er_x, label = "err_posx")
-		axs[2].set(ylabel = 'pox_error [m]')
+		axs[2].set(ylabel = 'posx_error [m]')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
@@ -313,15 +328,13 @@ class Cartesian_control:
 			#fr_z = psm_handle_mi.get_force()
 			self.fr_z = np.append(self.fr_z, fr_z)
 			'''
-
+			
 			ex = 0
 			self.er_x = np.append(self.er_x, ex)
 			ey = 0
 			self.er_y = np.append(self.er_y, ey)
 			ez = 0
 			self.er_z = np.append(self.er_z, ez)
-			
-			
 
 	#Cartesian control is applied here, reaching an (x,y) position trying to keep constant the force in z direction. 
 	#Initially, a start boolean is specified: if it is True, it means that is the first time this function is called. So, out of the internal 
@@ -329,69 +342,134 @@ class Cartesian_control:
 	#longer path (difference) between the two is found. The desired longer delta space is set, so that is possible to determine also the shortest one.
 	#Having now both the increments dx and dy it is possible to increase the values of x_desired and y_desired at every iteration until the goal is reached. 
 	
+	def define_path(self, goal_x, goal_y):
+		print("Processing:  Defining cartesian path ....")
+		
+		time_vect = []
+		posx_vect = []
+		posy_vect = []
+		posz_vect = []
+
+		time_el = 0
+		for i in range(0, self.f_cycle*self.exp_time):
+			time_vect = np.append(time_vect, time_el)
+			time_el = time_el + 1/self.f_cycle
+
+		time.sleep(0.5)
+		q1_read, q2_read, q3_read = self.get_position_joints_PSM()
+		
+		x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
 	
-	def reach_pos_XY(self, goal_x, goal_y, start):
+		
+		dx = (goal_x - x_el)/time_vect.size
+		for i in range(0, self.f_cycle*self.exp_time):
+			posx_vect = np.append(posx_vect, x_el)
+			x_el = x_el + dx
 
-		if start == True:
+		dy = (goal_y - y_el)/time_vect.size
+		for i in range(0, self.f_cycle*self.exp_time):
+			posy_vect = np.append(posy_vect, y_el)
+			y_el = y_el + dy
 
-			posx_start =  0.000000001
-			posy_start =  0.000000001
-			posz_start =  0.000000001
-			X_desired = 0.0
-			Y_desired = 0.0
-			count_step = 0
-			self.posx_end = goal_x
-			self.posy_end = goal_y
+		'''
+		dz = (goal_z - z_el)/time_vect.size
+		for i in range(0, self.f_cycle*self.exp_time):
+			posz_vect = np.append(posz_vect, z_el)
+			z_el = z_el + dz
+		'''
+		
 
-		if start == False:
-			
-			posx_start =  self.posx_end
-			posy_start =  self.posy_end
-			self.posx_end = goal_x
-			self.posy_end = goal_y
-			X_desired = posx_start
-			Y_desired = posy_start
+		return time_vect, posx_vect, posy_vect
+		
+	
+	def compute_inverse_kinematics(self, time_vect, x_vect, y_vect, z_vect):
+		
+		print("Processing:  IK computation ....")
+		q1_vect = []
+		q2_vect = []
+		q3_vect = []
 
-		path_x = abs(goal_x - posx_start)
-		path_y = abs(goal_y - posy_start)
+		for i in range(0, time_vect.size):
+			q1, q2, q3 = self.inverse_kinematics(x_vect[i], y_vect[i], z_vect[i])
+			q1_vect = np.append(q1_vect, q1)
+			q2_vect = np.append(q2_vect, q2)
+			q3_vect = np.append(q3_vect, q3)
 
-		if path_x >= path_y:
-			path_long = path_x
-			path_short = path_y
-		if path_x < path_y:
-			path_long = path_y
-			path_short = path_x
+		return q1_vect, q2_vect, q3_vect
 
-		d_step_long = 0.0001
-		#d_step_long = 0.001
-		d_step_short = (path_short / path_long) * d_step_long
-		if path_x >= path_y:
-			dx = d_step_long
-			dy = d_step_short
-		if path_x < path_y:
-			dx = d_step_short
-			dy = d_step_long 
+		'''
+		#print(q1_vect)
+		print("length q1:", q1_vect.size)
+		print("length q2:", q2_vect.size)
+		print("length q3:", q3_vect.size)
+		'''
+
+	def compute_forward_kinematics(self, time_vect, x_vect, y_vect, z_vect):
+		
+		print("Processing:  FK computation ....")
+		x1_vect = []
+		x2_vect = []
+		x3_vect = []
+
+		for i in range(0, time_vect.size):
+			x1, x2, x3 = self.forward_kinematics(x_vect[i], y_vect[i], z_vect[i])
+			x1_vect = np.append(x1_vect, x1)
+			x2_vect = np.append(x2_vect, x2)
+			x3_vect = np.append(x3_vect, x3)
+
+		return x1_vect, x2_vect, x3_vect
+
+		'''
+		#print(q1_vect)
+		print("length q1:", q1_vect.size)
+		print("length q2:", q2_vect.size)
+		print("length q3:", q3_vect.size)
+		'''
+
+
+	def reach_XY_force_control(self, goal_x, goal_y):
+
+		self.f_cycle = 50
+		self.exp_time = 10
+		dim = self.f_cycle*self.exp_time
+
+		time_v, x_v, y_v = self.define_path(goal_x, goal_y)
+		q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+		time.sleep(1)
+	
+		
+
+		print("Moving arm ....")
+		j=0
+		time_now = 0
+		new = True
+		#starttime=time.time()
+		self.time_start_a = time.time()
 
 		count = 0
 		window = []
 		window_size = 10
 		sum = 0
 		count1 = 0
-		
-		stop_x = False
-		stop_y = False
-		
 
-		#Here until the position x y haven't reached the goal position in x and y the following things are done:
-		#	-filter the force read from the simulation with a moving average filter
-		#	-find the delta movement in z direction sith a PI control of the filtered force
-		#	-apply the control
+		z_v = np.zeros(dim)
+		xfk = np.zeros(dim)
+		yfk = np.zeros(dim)
+		zfk = np.zeros(dim)
+		self.graph_f_cycle = np.zeros(dim)
+		self.graph_fd_cycle = np.zeros(dim)
+		self.error_force_cycle = np.zeros(dim)
 
+		print(zfk[0])
 
-		while (stop_x == False) or (stop_y == False):
+		while(j<self.f_cycle*self.exp_time):
+			self.count_time()
+			starttime=time.time()
+			self.time_start_a = time.time()
 
-			self.time_start_a = time.time()			
-			#_,_,force_raw_now = psm_handle_mi.get_force()
+			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r)
+
 			force_raw_now = psm_handle_mi.get_force()
 
 			count = count + 1
@@ -406,202 +484,99 @@ class Cartesian_control:
 					sum = sum + window[i-1]
 				self.force = sum / window_size
 				sum = 0
-			
+
 			error = self.force_const - self.force
 			e_rel = error/self.force_const
 			self.P_value = (self.Kp * error)
 		
 			self.Integrator = self.Integrator + error
 			self.I_value = self.Integrator * self.Ki
+				
+			PID = self.P_value + self.I_value
+			zd = zfk[j] + PID*zfk[j]
+
+			z_v[j] = zd
+
+			q1,q2,q3 = self.inverse_kinematics(x_v[j],y_v[j],z_v[j])
+			
+			self.set_position_robot(q1,q2,q3)
+
+			self.graph_f_cycle[j] = self.force
+			self.graph_fd_cycle[j] = self.force_const
+			self.error_force_cycle[j] = e_rel
+			
+			j=j+1
+
+			time.sleep(1/self.f_cycle)
+			print(time.time()-starttime)
+
+			
+		self.graph_px = np.append(self.graph_px, x_v)
+		self.graph_py = np.append(self.graph_py, y_v)
+
+
+		for i in range (0,dim):
+
+			self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
+			self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
+			self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
+			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
+			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
+			self.error_force = np.append(self.error_force, self.error_force_cycle[i])		
+
+
 		
 		
-			PID = self.P_value + self.I_value 
-
-			self.get_position_joints_PSM()
-			self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-			Z_desired_2 = self.z_fk
-			Z_desired_2 = Z_desired_2 + PID*Z_desired_2
-
-			#Now, find the desired joint positions and compute the jacobian. Then, if it is the first iteration, the first desired
-			#position is set and then the actual joint position is read. If it is not the first iteration, first of all a PI control
-			#is applied to the difference between the desired joint position and the read joint position. Then, the new obtained dq is 
-			#added to the desired joint position, this new value is set to the robot, than the joint position is read again.
-			
-			self.inverse_kinematics(X_desired, Y_desired, Z_desired_2)
-			self.jacobian(self.q1, self.q2, self.q3)
-			
-			if self.flag_first_pos == True:
-				self.set_position_robot(self.q1, self.q2, self.q3)
-				time.sleep(0.1)
-				self.get_position_joints_PSM()
-				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-				self.flag_first_pos = False
-				
-			if self.flag_first_pos == False:
-				delta_cart = [0, 0, 0]
-				delta_q = [0, 0, 0]
-				dq = [0,0,0]
-
-				Kpx = 0.9
-				Kix = 0.05
-				delta_q[0] = self.q1-self.q1_read
-				self.P_value = (Kpx * delta_q[0])		
-				self.Integratorx = self.Integratorx + delta_q[0]
-				self.I_value = self.Integratorx * Kix		
-				PID = self.P_value + self.I_value 
-				dq[0] = delta_q[0] + PID*delta_q[0]
-
-				Kpy = 0.9
-				Kiy = 0.05
-				delta_q[1] = self.q2-self.q2_read
-				self.P_value = (Kpy * delta_q[1])		
-				self.Integratory = self.Integratory + delta_q[1]
-				self.I_value = self.Integratory * Kiy		
-				PID = self.P_value + self.I_value 
-				dq[1] = delta_q[1] + PID*delta_q[1]
-				
-				Kpz = 0.005
-				Kiz = 0.0008	
-				delta_q[2] = self.q3-self.q3_read
-				self.P_value = (Kpz * delta_q[2])		
-				self.Integratorz = self.Integratorz + delta_q[2]
-				self.I_value = self.Integratorz * Kiz		
-				PID = self.P_value + self.I_value 
-				dq[2] = delta_q[2] + PID*delta_q[2]
-				
-				joint_q1 = self.q1 + dq[0]
-				joint_q2 = self.q2 + dq[1]
-				joint_q3 = self.q3 + dq[2]
-				self.set_position_robot(joint_q1, joint_q2, joint_q3)
-				time.sleep(0.1)
-				self.get_position_joints_PSM()
-				self.forward_kinematics(self.q1_read, self.q2_read, self.q3_read)
-				#self.update_pos == True
 
 
+	def plot_new(self):
+		
+		time = []
+		time = self.time
+		time_ef = []
+		time_ef = self.time_ef
+	
+		fig, axs = plt.subplots(nrows = 6)
 
-			#At the beginning, don't update the desired x and y positions until the force is within a certain bandwidth for
-			#a defined number of iterations.
+		axs[0].plot(time, self.xr_plot, color = 'r', label = "actual x")
+		axs[0].plot(time, self.xd_plot, color = 'b', label = "target x")
+		axs[0].set(ylabel = 'Pos_x [m]')	
+		axs[0].legend(loc='best')
+		axs[0].grid()
 
-			if self.update_pos == False:
-				print(self.force)
-				if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
-					self.count_mi_loop = self.count_mi_loop + 1
-					print("waiting...", self.count_mi_loop)
-				if self.count_mi_loop == 10:
-					count_mi_loop = 0
-					
-					self.update_pos = True
+		axs[1].plot(time, self.yr_plot, color = 'r', label = "actual y")
+		axs[1].plot(time, self.yd_plot, color = 'b', label = "target y")
+		axs[1].set(ylabel = 'Pos_y [m]')	
+		axs[1].legend(loc='best')
+		axs[1].grid()
 
+		axs[2].plot(time, self.zr_plot, color = 'r', label = "actual z")
+		axs[2].plot(time, self.zd_plot, color = 'b', label = "target z")
+		axs[2].set(ylabel = 'Pos_z [m]')	
+		axs[2].legend(loc='best')
+		axs[2].grid()
 
+		axs[3].plot(time, self.er_x, label = "err_posx")
+		axs[3].set(ylabel = 'posx_error [m]')
+		axs[3].legend(loc='best')
+		axs[3].grid()
 
-				self.graph_f = np.append(self.graph_f, self.force)
-				self.graph_fd = np.append(self.graph_fd, self.force_const)
-				self.count_time()
-				self.error_force = np.append(self.error_force, e_rel)
-				self.count_time_ef()
-				self.graph_px = np.append(self.graph_px, X_desired)
-				self.graph_py = np.append(self.graph_py, Y_desired)
+		axs[4].plot(time, self.er_y, label = "err_posy")
+		axs[4].set(ylabel = 'posy_error [m]')
+		axs[4].legend(loc='best')
+		axs[4].grid()
 
-				'''
-				fr_x,_,_ = psm_handle_mi.get_force()
-				#fr_x = psm_handle_mi.get_force()
-				self.fr_x = np.append(self.fr_x, fr_x)
-				_,fr_y,_ = psm_handle_mi.get_force()
-				#fr_y = psm_handle_mi.get_force()
-				self.fr_y = np.append(self.fr_y, fr_y)
-				_,_,fr_z = psm_handle_mi.get_force()
-				#fr_z = psm_handle_mi.get_force()
-				self.fr_z = np.append(self.fr_z, fr_z)
-				'''
+		axs[5].plot(time, self.er_z, label = "err_posz")
+		axs[5].set(ylabel = 'posz_error [m]')
+		axs[5].set(xlabel = 'Time [s]')	
+		axs[5].legend(loc='best')
+		axs[5].grid()
 
+		plt.show()
 
-				#ex = (X_desired-self.x_fk)/X_desired
-				ex = 0
-				self.er_x = np.append(self.er_x, ex)
-				#ey = (Y_desired-self.y_fk)/Y_desired
-				ey = 0
-				self.er_y = np.append(self.er_y, ey)
-				#ez = (Z_desired_2-self.z_fk)/Z_desired_2
-				ez = 0
-				self.er_z = np.append(self.er_z, ez)
-				
-
-
-			#update desired cartesian positions
-
-			if self.update_pos == True:
-				print(self.force, self.force_const)
-
-				if goal_x >= posx_start:
-					if goal_x > X_desired:
-						X_desired = X_desired + dx
-					else:
-						stop_x = True
-				if goal_x < posx_start:
-					if goal_x < X_desired:
-						X_desired = X_desired - dx
-					else:
-						stop_x = True
-
-				if goal_y >= posy_start:
-					if goal_y > Y_desired:
-						Y_desired = Y_desired + dy
-					else:
-						stop_y = True
-				if goal_y < posy_start:
-					if goal_y < Y_desired:
-						Y_desired = Y_desired - dy
-					else:
-						stop_y = True
-
-				self.graph_f = np.append(self.graph_f, self.force)
-				self.graph_fd = np.append(self.graph_fd, self.force_const)
-				self.count_time()
-				self.error_force = np.append(self.error_force, e_rel)
-				self.count_time_ef()
-				self.graph_px = np.append(self.graph_px, X_desired)
-				self.graph_py = np.append(self.graph_py, Y_desired)
-
-				'''
-				fr_x,_,_ = psm_handle_mi.get_force()
-				#fr_x = psm_handle_mi.get_force()
-				self.fr_x = np.append(self.fr_x, fr_x)
-				_,fr_y,_ = psm_handle_mi.get_force()
-				#fr_y = psm_handle_mi.get_force()
-				self.fr_y = np.append(self.fr_y, fr_y)
-				_,_,fr_z = psm_handle_mi.get_force()
-				#fr_z = psm_handle_mi.get_force()
-				self.fr_z = np.append(self.fr_z, fr_z)
-				'''
-
-				ex = (X_desired-self.x_fk)#/X_desired
-				self.er_x = np.append(self.er_x, ex)
-				ey = (Y_desired-self.y_fk)#/Y_desired
-				self.er_y = np.append(self.er_y, ey)
-				ez = (Z_desired_2-self.z_fk)#/Z_desired_2
-				self.er_z = np.append(self.er_z, ez)
-				self.update_pos = True
-
-				self.update_pos = True
-				
-			print("\n")
-			print(X_desired)
-			print(Y_desired)
-			print("\n")
-						
-			#self.count_step = self.count_step + 1
-			#vec_step = np.append(vec_step, count_step)
-
-		self.flag_first_pos = True	
-		self.update_pos == False
 
 	
-
-
-
-
-
+	
 def main():
 
 	# Let's sleep for a very brief moment to give the internal callbacks
@@ -649,12 +624,13 @@ def main():
 	psm_handle_pel.set_joint_pos(0, 0)
 	m_start = 0.155
 	psm_handle_pel.set_joint_pos(0, m_start)
+	time.sleep(2)
 	
 
 	cart_c = Cartesian_control()
 	
 	print("go in 2 seconds!!!")
-	time.sleep(2)
+	#time.sleep(2)
 	'''
 	cart_c.approach_goal_Z(m_start)
 	cart_c.reach_pos_XY(0.01, 0.02, True)
@@ -666,15 +642,19 @@ def main():
 	
 	
 	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_pos_XY(0.01, 0.06, True)
-	cart_c.reach_pos_XY(-0.04, 0.06, False)
-	cart_c.reach_pos_XY(-0.04, 0.01, False)
+	cart_c.reach_XY_force_control(0.09, 0.07)
+	cart_c.reach_XY_force_control(0.05, -0.01)
+	cart_c.reach_XY_force_control(0.01, 0.10)
+	#cart_c.reach_pos_XY(-0.04, 0.06, False)
+	#cart_c.reach_pos_XY(-0.04, 0.01, False)
+
+	
 	
 
 	
 	print('STEP1')	
-	
-	
+	#cart_c.plot_new()
+
 	cart_c.plots()
 
 
@@ -685,9 +665,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-
-'''FREQUENZA_CICLO=100Hz
+'''
+FREQUENZA_CICLO=100Hz
 DURATA_ESPERIMENTO=10s
 vettore_tempi=0:0.01:10 vettore di durata*frequenza elementi
 vttore posizioni x= qualcosa che va calcolato, lungo ESATTAMENTE COME VETTORE TEMPI  
@@ -727,4 +706,4 @@ def move_to_joint_pos(self):
 
 		sleep(1/FREQUENZA_CICLO)
 	end
-	'''
+'''

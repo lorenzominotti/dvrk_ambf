@@ -908,18 +908,22 @@ def main():
 	
 	
 	#cart_c.temp(-0.06, 0.04, 0.0)
-	
-	#cart_c.approach_goal_Z(m_start)
-	#cart_c.reach_pos_XY(0.01, 0.02, True)
-	#cart_c.reach_pos_XY(-0.01, 0.04, False)
-	#cart_c.reach_pos_XY(0.02, 0.02, False)
+	'''
+	cart_c.approach_goal_Z(m_start)
+	cart_c.reach_pos_XY(0.01, 0.02, True)
+	cart_c.reach_pos_XY(-0.01, 0.04, False)
+	cart_c.reach_pos_XY(0.02, 0.02, False)
+	'''
 	#cart_c.reach_pos_XY(0.01, -0.01, False)
 	#cart_c.reach_pos_XY(-0.03, -0.05, False)
-	
+	'''
 	cart_c.exert_sin_force1(m_start)
 	cart_c.plot_sin()
-
-
+	'''
+	cart_c.approach_goal_Z(m_start)
+	cart_c.reach_pos_XY(0.01, 0.06, True)
+	cart_c.reach_pos_XY(-0.04, 0.06, False)
+	cart_c.reach_pos_XY(-0.04, 0.01, False)
 	
 	#cart_c.temp01
  
@@ -934,7 +938,7 @@ def main():
 	
 	
 	
-	#cart_c.plots()
+	cart_c.plots()
 
 
 	raw_input("Let's clean up. Press Enter to continue...")

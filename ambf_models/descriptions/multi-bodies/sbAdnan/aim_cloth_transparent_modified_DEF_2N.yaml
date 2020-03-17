@@ -7,7 +7,7 @@ joints: []
 high resolution path: ./high_res/
 low resolution path: ./low_res/
 ignore inter-collision: false
-namespace: /ambf/env/raven_2/
+namespace: /ambf/env/cloth/
 BODY aim-cloth:
   name: aim-cloth
   mesh: aim-cloth2.OBJ

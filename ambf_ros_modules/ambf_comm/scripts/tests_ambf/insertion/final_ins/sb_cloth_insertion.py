@@ -66,7 +66,7 @@ time.sleep(1)
 #psm_handle_pel.set_joint_pos(0, 0.1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
-m = 0.17
+m = 0.15
 psm_handle_pel.set_joint_pos(0, m)
 #psm_handle_pel.set_joint_pos(0, math.radians(40))
 #time.sleep(1)
@@ -351,6 +351,128 @@ while m > limit_mi_2:
 	if (force < (force_const_min + band)) and (force > (force_const_min - band)):
 		count_mi_loop = count_mi_loop + 1
 	if count_mi_loop ==  200:
+		break
+	#m = m + delta_m
+	psm_handle_pel.set_joint_pos(0, m)
+	force_old2 = force_old1
+	force_old1 = force
+	graph_d = np.append(graph_d, degree)
+	PID = 1
+	graph_PID = np.append(graph_PID, PID)
+	graph_Pval = np.append(graph_Pval, P_value)
+	graph_Ival = np.append(graph_Ival, I_value)
+	graph_Dval = np.append(graph_Dval, D_value)
+	graph_m = np.append(graph_m, m)
+	graph_frn = np.append(graph_frn, force_raw_now)
+	graph_f = np.append(graph_f, force)
+	graph_fd = np.append(graph_fd, force_const)
+	error_force = np.append(error_force, 0)
+	time_end_a_ef = time.time()
+	deltat_a_ef = (time_end_a_ef-time_start_a) + deltat_a_ef 
+	time_ef = np.append(time_ef, deltat_a_ef)
+	time_end_a = time.time()
+	deltat_a = (time_end_a-time_start_a) + deltat_a 
+	time1 = np.append(time1, deltat_a)
+	time.sleep(f_inv)
+
+count_mi_loop = 0
+while m < limit_mi:
+
+	time_start_a = time.time()
+	force_raw_now = psm_handle_mi.get_force()
+	#force = force_raw_now
+	print(force_raw_now)
+	average = (force_old2 + force_old1)/2
+	#if(force > (average + delta)) or (force < (average - delta)):
+		#force = force_old1
+		#print('\n')
+		#print('UNEXPECTED_PEAK..........COMPENSATION')
+		#print('\n')
+
+	count = count + 1
+	if count < window_size + 1:
+		window = np.append(window, force_raw_now)
+		force = force_raw_now
+	else:
+		for i in range(1, window_size):
+			window[i-1] = window[i]
+			if i == (window_size - 1):
+				window[i] = force_raw_now
+			sum = sum + window[i-1]
+		force = sum / window_size
+		sum = 0
+
+	if force > (force_const_max + band):
+		m = m - delta_m/2
+		psm_handle_pel.set_joint_pos(0, m)
+	if force < (force_const_max - band):
+	    m = m + delta_m/2
+	    psm_handle_pel.set_joint_pos(0, m)
+
+	if (force < (force_const_max + band)) and (force > (force_const_max - band)):
+		count_mi_loop = count_mi_loop + 1
+	if count_mi_loop ==  200:
+		break
+	#m = m + delta_m
+	psm_handle_pel.set_joint_pos(0, m)
+	force_old2 = force_old1
+	force_old1 = force
+	graph_d = np.append(graph_d, degree)
+	PID = 1
+	graph_PID = np.append(graph_PID, PID)
+	graph_Pval = np.append(graph_Pval, P_value)
+	graph_Ival = np.append(graph_Ival, I_value)
+	graph_Dval = np.append(graph_Dval, D_value)
+	graph_m = np.append(graph_m, m)
+	graph_frn = np.append(graph_frn, force_raw_now)
+	graph_f = np.append(graph_f, force)
+	graph_fd = np.append(graph_fd, force_const)
+	error_force = np.append(error_force, 0)
+	time_end_a_ef = time.time()
+	deltat_a_ef = (time_end_a_ef-time_start_a) + deltat_a_ef 
+	time_ef = np.append(time_ef, deltat_a_ef)
+	time_end_a = time.time()
+	deltat_a = (time_end_a-time_start_a) + deltat_a 
+	time1 = np.append(time1, deltat_a)
+	time.sleep(f_inv)
+
+count_mi_loop = 0
+while m > limit_mi_2:
+
+	time_start_a = time.time()
+	force_raw_now = psm_handle_mi.get_force()
+	#force = force_raw_now
+	print(force_raw_now)
+	average = (force_old2 + force_old1)/2
+	#if(force > (average + delta)) or (force < (average - delta)):
+		#force = force_old1
+		#print('\n')
+		#print('UNEXPECTED_PEAK..........COMPENSATION')
+		#print('\n')
+
+	count = count + 1
+	if count < window_size + 1:
+		window = np.append(window, force_raw_now)
+		force = force_raw_now
+	else:
+		for i in range(1, window_size):
+			window[i-1] = window[i]
+			if i == (window_size - 1):
+				window[i] = force_raw_now
+			sum = sum + window[i-1]
+		force = sum / window_size
+		sum = 0
+
+	if force > (force_const_min + band):
+		m = m - delta_m/2
+		psm_handle_pel.set_joint_pos(0, m)
+	if force < (force_const_min - band):
+	    m = m + delta_m/2
+	    psm_handle_pel.set_joint_pos(0, m)
+
+	if (force < (force_const_min + band)) and (force > (force_const_min - band)):
+		count_mi_loop = count_mi_loop + 1
+	if count_mi_loop == 200:
 		break
 	#m = m + delta_m
 	psm_handle_pel.set_joint_pos(0, m)

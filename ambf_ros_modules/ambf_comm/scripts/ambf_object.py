@@ -221,8 +221,8 @@ class Object(WatchDog):
         """
         Get the force from object, in this case only from joint of toolgripper1link
         """
-        return self._state.wrench.force.x,self._state.wrench.force.y,self._state.wrench.force.z
-	#return self._state.wrench.force.z
+        #return self._state.wrench.force.x,self._state.wrench.force.y,self._state.wrench.force.z
+	return self._state.wrench.force.z
 
     def get_force_command(self):
         """
