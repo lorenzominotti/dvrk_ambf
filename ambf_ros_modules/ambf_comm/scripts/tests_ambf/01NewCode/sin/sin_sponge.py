@@ -42,7 +42,7 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 # fino a qua tutto uguale poi vedi funzione sotto
 class Cartesian_control:
-	window = []
+	
 	xd_plot = []
 	yd_plot = []
 	zd_plot = []
@@ -50,6 +50,7 @@ class Cartesian_control:
 	yr_plot = []
 	zr_plot = []
 	time_plot = []
+	window = []
 
 	force_raw = []
 	graph_f = []
@@ -69,8 +70,8 @@ class Cartesian_control:
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.00008
-	band = 0.01
+	delta_m_start = 0.0001
+	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
 	update_pos = False
@@ -95,7 +96,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 1.5-amplitude
+	force_const = 2.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -112,8 +113,8 @@ class Cartesian_control:
 	Kp = 0.00005 #rqt_plot
 	Ki = 0.000003
 	'''
-	Kp = 0.08 #rqt_plot
-	Ki = 0.008
+	Kp = 0.0001
+	Ki = 0.00000005
 
 	Integrator = 0
 	Integratorx = 0
@@ -584,8 +585,8 @@ class Cartesian_control:
 		plt.show()
 
 
-
 	def plot_sin(self):
+		print("plot...")
 		time = []
 		time = self.time
 		time_ef = []
@@ -607,7 +608,6 @@ class Cartesian_control:
 		plt.show()
 
 
-
 	def exert_sin_force2(self, m_start):
 		
 		force_base = self.force_const
@@ -617,7 +617,7 @@ class Cartesian_control:
 		sum = 0
 		count1 = 0
 		
-		step = 0.25
+		step = 8
 		times = 0
 		angle = 0
 
@@ -657,8 +657,8 @@ class Cartesian_control:
 
 
 		
-		Kps = 0.01 #good for step = 5
-		Kis = 0.00008
+		Kps = 0.001 #good for step = 5
+		Kis = 0.0003
 
 		print("STARTING SINUSOID IN 2 SECONDS")
 		#time.sleep(2)
@@ -771,7 +771,7 @@ def main():
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.16
+	m_start = 0.17
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
@@ -807,7 +807,7 @@ def main():
 	print('STEP1')	
 	#cart_c.plot_new()
 
-	cart_c.plots()
+	#cart_c.plots()
 
 
 	raw_input("Let's clean up. Press Enter to continue...")
@@ -816,5 +816,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -40,6 +40,9 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 class Joint_control:
 	
+	error_force2 = []
+	graph_f2 = []
+
 	force_raw = []
 	graph_f = []
 	graph_m = []
@@ -87,7 +90,7 @@ class Joint_control:
 
 	amplitude = 0.5
 
-	force_const = 3.5-amplitude
+	force_const = 2.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -100,9 +103,11 @@ class Joint_control:
 
 	flag_first_pos = True
 	
-	Kp = 0.002
-	Ki = 0.00008
+	#Kp = 0.006 #rqt_plot
+	#Ki = 0.000035
 
+	Kp = 0.003 #rqt_plot
+	Ki = 0.00005
 
 	Integrator = 0
 	Derivator = 0
@@ -158,7 +163,7 @@ class Joint_control:
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
-			self.count_time_ef()
+			#self.count_time_ef()
 			PID = 1
 			self.graph_m = np.append(self.graph_m, self.m)
 
@@ -202,7 +207,7 @@ class Joint_control:
 			path_long = path_y
 			path_short = path_x
 
-		d_degree_long = 0.1
+		d_degree_long = 0.15
 		d_degree_short = (path_short / path_long) * d_degree_long
 		if path_x >= path_y:
 			dx = d_degree_long
@@ -299,6 +304,8 @@ class Joint_control:
 			
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
+			self.graph_f2 = np.append(self.graph_f2, self.force)
+			self.error_force2 = np.append(self.error_force2, e_rel)
 			self.count_time()
 			self.error_force = np.append(self.error_force, e_rel)
 			q1,q2,_= self.get_position_joints_PSM()
@@ -328,7 +335,11 @@ class Joint_control:
 		time = []
 		time = self.time
 		time_ef = []
-		time_ef = self.time_ef
+		time2 = self.time_ef
+
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_error.csv', self.error_force2, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")

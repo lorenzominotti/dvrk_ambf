@@ -91,7 +91,7 @@ delta_degree = 0.025
 force_old3 = 0
 force_old2 = 0
 force_old1 = 0
-band = 0.05
+band = 0.2
 band2 = 0.3 #cloth
 #band2 = 0.08 #cheese
 limit_mi = 0.30
@@ -145,12 +145,13 @@ Ki = 0.00005
 #Kd = 0.00008
 '''
 
-Kp = 0.002
-Ki = 0.00005
+Kp = 0.0002
+Ki = 0.000005
 
 Integrator = 0
 Derivator = 0
 time_now = 0
+force_const = 4
 
 while m < limit_mi:
 

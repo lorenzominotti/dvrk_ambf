@@ -12,6 +12,8 @@ matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from scipy import signal
 import numpy as np
+from numpy import asarray
+from numpy import savetxt
 
 
 
@@ -55,6 +57,9 @@ class Cartesian_control:
 	yr_plot = []
 	zr_plot = []
 	time_plot = []
+
+	graph_f2 = []
+	error_force2 = []
 
 	force_raw = []
 	graph_f = []
@@ -204,7 +209,11 @@ class Cartesian_control:
 		time = []
 		time = self.time
 		time_ef = []
-		time_ef = self.time_ef
+		time2 = self.time_ef
+
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_cart_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_cart_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_cart_error.csv', self.error_force2, delimiter=",") 
 	
 		fig, axs = plt.subplots(nrows = 6)
 
@@ -289,7 +298,7 @@ class Cartesian_control:
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
-			self.count_time_ef()
+			#self.count_time_ef()
 
 			
 			self.count_time()		
@@ -431,6 +440,7 @@ class Cartesian_control:
 		while(j<self.f_cycle*self.exp_time):
 
 			self.count_time()
+			self.count_time_ef()
 			starttime=time.time()
 			self.time_start_a = time.time()
 
@@ -497,7 +507,11 @@ class Cartesian_control:
 			self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
 			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
 			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
-			self.error_force = np.append(self.error_force, self.error_force_cycle[i])		
+			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
+			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
+			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
+
+
 
 
 		

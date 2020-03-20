@@ -66,6 +66,9 @@ class Cartesian_control:
 	graph_px = []
 	graph_py = []
 
+	graph_f2 = []
+	error_force2 = []
+
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
@@ -95,7 +98,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 3.5-amplitude
+	force_const = 2.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -112,8 +115,8 @@ class Cartesian_control:
 	Kp = 0.00005 #rqt_plot
 	Ki = 0.000003
 	'''
-	Kp = 0.008 #rqt_plot
-	Ki = 0.0012
+	Kp = 0.002 #rqt_plot
+	Ki = 0.0008
 
 	Integrator = 0
 	Integratorx = 0
@@ -199,7 +202,11 @@ class Cartesian_control:
 		time = []
 		time = self.time
 		time_ef = []
-		time_ef = self.time_ef
+		time2 = self.time_ef
+
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_error.csv', self.error_force2, delimiter=",")
 	
 		fig, axs = plt.subplots(nrows = 6)
 
@@ -305,7 +312,7 @@ class Cartesian_control:
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
-			self.count_time_ef()
+			#self.count_time_ef()
 
 			
 			self.count_time()		
@@ -523,6 +530,8 @@ class Cartesian_control:
 			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
 			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
 			self.error_force = np.append(self.error_force, self.error_force_cycle[i])		
+			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
+			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
 
 
 		

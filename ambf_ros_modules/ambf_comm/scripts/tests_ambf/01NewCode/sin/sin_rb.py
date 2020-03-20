@@ -42,7 +42,7 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 # fino a qua tutto uguale poi vedi funzione sotto
 class Cartesian_control:
-	window = []
+	
 	xd_plot = []
 	yd_plot = []
 	zd_plot = []
@@ -50,6 +50,7 @@ class Cartesian_control:
 	yr_plot = []
 	zr_plot = []
 	time_plot = []
+	window = [10]
 
 	force_raw = []
 	graph_f = []
@@ -69,8 +70,8 @@ class Cartesian_control:
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.00008
-	band = 0.01
+	delta_m_start = 0.0001
+	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
 	update_pos = False
@@ -93,9 +94,9 @@ class Cartesian_control:
 	#Kp_start = 0.000001
 	#Ki_start = 0.000001
 
-	amplitude = 0.5
+	amplitude = 1
 
-	force_const = 1.5-amplitude
+	force_const = 5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -112,8 +113,8 @@ class Cartesian_control:
 	Kp = 0.00005 #rqt_plot
 	Ki = 0.000003
 	'''
-	Kp = 0.08 #rqt_plot
-	Ki = 0.008
+	Kp = 0.008 #rqt_plot
+	Ki = 0.0012
 
 	Integrator = 0
 	Integratorx = 0
@@ -268,6 +269,7 @@ class Cartesian_control:
 	#force. Once the target force is reached, if the force read remains within a bandwidth for a specified number of iteration, exit the loop.
 
 	def approach_goal_Z(self, m_start):
+		print("BBBBBBBBBBBBBBBBBBBBBBBBBBB")
 		self.m = m_start
 		force_old2 = 0
 		force_old1 = 0
@@ -278,6 +280,7 @@ class Cartesian_control:
 		sum = 0
 		count1 = 0
 		while self.m < self.limit_mi:
+			
 			
 			self.time_start_a = time.time()
 			#_,_,force_raw_now = psm_handle_mi.get_force()
@@ -584,8 +587,8 @@ class Cartesian_control:
 		plt.show()
 
 
-
 	def plot_sin(self):
+		print("plot...")
 		time = []
 		time = self.time
 		time_ef = []
@@ -607,7 +610,6 @@ class Cartesian_control:
 		plt.show()
 
 
-
 	def exert_sin_force2(self, m_start):
 		
 		force_base = self.force_const
@@ -622,7 +624,7 @@ class Cartesian_control:
 		angle = 0
 
 		self.f_cycle = 50
-		self.exp_time = 60
+		self.exp_time = 10
 		dim = self.f_cycle*self.exp_time
 
 		self.graph_f_cycle = np.zeros(dim)
@@ -651,14 +653,15 @@ class Cartesian_control:
 		print("SET INCLINATION")
 		psm_handle_pfl.set_joint_pos(0,math.radians(-set_angle))
 		time.sleep(0.5)
+		print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
 		self.approach_goal_Z(m_start)
 		q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 		x_fk,y_fk,z_fk = self.forward_kinematics(q1_r,q2_r,q3_r)
 
 
 		
-		Kps = 0.01 #good for step = 5
-		Kis = 0.00008
+		Kps = 0.03 #rqt_plot
+		Kis = 0.00000000002
 
 		print("STARTING SINUSOID IN 2 SECONDS")
 		#time.sleep(2)
@@ -771,7 +774,7 @@ def main():
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.16
+	m_start = 0.155
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
@@ -807,7 +810,7 @@ def main():
 	print('STEP1')	
 	#cart_c.plot_new()
 
-	cart_c.plots()
+	#cart_c.plots()
 
 
 	raw_input("Let's clean up. Press Enter to continue...")
@@ -816,5 +819,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
