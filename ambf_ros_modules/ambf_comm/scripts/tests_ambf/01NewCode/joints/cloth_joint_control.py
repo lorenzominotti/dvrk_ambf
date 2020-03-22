@@ -145,8 +145,8 @@ class Joint_control:
 		while self.m < self.limit_mi:
 			
 			self.time_start_a = time.time()
-			#force_raw_now = psm_handle_mi.get_force()
-			_,_,force_raw_now = psm_handle_mi.get_force()
+			force_raw_now = psm_handle_mi.get_force()
+			#_,_,force_raw_now = psm_handle_mi.get_force()
 			self.force = force_raw_now
 			print(self.force)
 			average = (force_old2 + force_old1)/2
@@ -184,7 +184,7 @@ class Joint_control:
 			self.q1_plot = np.append(self.q1_plot, q1)
 			self.q2_plot = np.append(self.q2_plot, q2)
 			self.count_time()
-			
+			'''
 			fr_x,_,_ = psm_handle_mi.get_force()
 			#fr_x = psm_handle_mi.get_force()
 			self.fr_x = np.append(self.fr_x, fr_x)
@@ -194,7 +194,7 @@ class Joint_control:
 			_,_,fr_z = psm_handle_mi.get_force()
 			#fr_z = psm_handle_mi.get_force()
 			self.fr_z = np.append(self.fr_z, fr_z)
-			
+			'''
 
 
 	def reach_XY_force_control(self, goal_x, goal_y, start):
@@ -260,8 +260,8 @@ class Joint_control:
 			py = pos_tool.y
 			pz = pos_tool.z
 			self.force_old1 = self.force
-			#force_raw_now = psm_handle_mi.get_force()
-			_,_,force_raw_now = psm_handle_mi.get_force()
+			force_raw_now = psm_handle_mi.get_force()
+			#_,_,force_raw_now = psm_handle_mi.get_force()
 			#print(force_raw_now)
 
 			count = count + 1
@@ -339,7 +339,7 @@ class Joint_control:
 			self.count_time_ef()
 
 			pos = psm_handle_trl.get_pos()
-
+			'''
 			fr_x,_,_ = psm_handle_mi.get_force()
 			#fr_x = psm_handle_mi.get_force()
 			self.fr_x = np.append(self.fr_x, fr_x)
@@ -349,7 +349,7 @@ class Joint_control:
 			_,_,fr_z = psm_handle_mi.get_force()
 			#fr_z = psm_handle_mi.get_force()
 			self.fr_z = np.append(self.fr_z, fr_z)
-			
+			'''
 			
 			time.sleep(self.f_inv)
 			
@@ -370,9 +370,9 @@ class Joint_control:
 		time_ef = []
 		time2 = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_joint_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_joint_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_cloth_joint_error.csv', self.error_force2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_cloth_joint_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_cloth_joint_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_cloth_joint_error.csv', self.error_force2, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -481,7 +481,7 @@ def main():
 	joint_c.reach_XY_force_control(-0.07, -0.09, True)
 	joint_c.reach_XY_force_control(0.01, -0.05, False)
 	joint_c.reach_XY_force_control(-0.10, -0.01, False)
-	joint_c.plot_new()
+	joint_c.plots()
 
 	'''
 	joint_c.reach_pos_XY(-0.05, 0.03, True)

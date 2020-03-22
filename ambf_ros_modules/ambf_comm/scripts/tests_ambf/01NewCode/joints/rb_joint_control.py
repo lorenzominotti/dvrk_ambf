@@ -337,9 +337,9 @@ class Joint_control:
 		time_ef = []
 		time2 = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_joint_error.csv', self.error_force2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_error.csv', self.error_force2, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")

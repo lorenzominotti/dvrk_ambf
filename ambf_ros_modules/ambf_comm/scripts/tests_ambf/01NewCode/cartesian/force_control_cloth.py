@@ -403,8 +403,8 @@ class Cartesian_control:
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
-		self.f_cycle = 50
-		self.exp_time = 10
+		self.f_cycle = 70
+		self.exp_time = 10 
 		dim = self.f_cycle*self.exp_time
 
 		time_v, x_v, y_v = self.define_path(goal_x, goal_y)

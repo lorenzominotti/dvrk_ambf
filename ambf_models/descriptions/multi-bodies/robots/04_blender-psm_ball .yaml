@@ -23,9 +23,9 @@ BODY base link:
     orientation: {p: -0.0, r: 0.0, y: 3.14} #standard
 #    position: {x: 1.5, y: 0.3, z: 0.25} #random
 #    orientation: {p: -0.0, r: 0.0, y: 1.57} #puzzle
-    position: {x: 0.5, y: 1.0, z: 0.05} #position for cloth
+#    position: {x: 0.5, y: 1.0, z: 0.05} #position for cloth
 #    position: {x: 0.7, y: 1.2, z: 0.07} #position for clothnew		
-#    position: {x: 0.5, y: 0.7, z: -0.68} #position for cheese
+    position: {x: 0.5, y: 0.7, z: -0.68} #position for cheese
 #    position: {x: 0.5, y: 0.7, z: -0.73} #position for cheese2
 #    position: {x: 0.5, y: 0.7, z: -0.63} #position for soft box
 #    position: {x: 0.5, y: 0.6, z: -0.80} #position for cube

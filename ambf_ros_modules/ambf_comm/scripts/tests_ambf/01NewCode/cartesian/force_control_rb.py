@@ -116,7 +116,7 @@ class Cartesian_control:
 	Ki = 0.000003
 	'''
 	Kp = 0.002 #rqt_plot
-	Ki = 0.0008
+	Ki = 0.0005
 
 	Integrator = 0
 	Integratorx = 0
@@ -204,9 +204,9 @@ class Cartesian_control:
 		time_ef = []
 		time2 = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/01_rb_cart_error.csv', self.error_force2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_cart_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_cart_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_cart_error.csv', self.error_force2, delimiter=",")
 	
 		fig, axs = plt.subplots(nrows = 6)
 
@@ -436,7 +436,7 @@ class Cartesian_control:
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
-		self.f_cycle = 50
+		self.f_cycle = 70
 		self.exp_time = 10
 		dim = self.f_cycle*self.exp_time
 
