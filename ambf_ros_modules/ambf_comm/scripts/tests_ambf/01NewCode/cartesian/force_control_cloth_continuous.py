@@ -1,5 +1,4 @@
 #!/usr/bin/env python2.7
-from __future__ import division
 # Import the Client from ambf_client package
 from ambf_client import Client
 import time
@@ -414,7 +413,7 @@ class Cartesian_control:
 
 	'''
 
-	#Cartesian control is applied here, reaching an (x,y) position trying to keep constant the force in z direction.
+	#Cartesian control old
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
@@ -504,11 +503,9 @@ class Cartesian_control:
 			
 			j=j+1
 
-			#time.sleep(1/self.f_cycle)
-			#print(time.time()-starttime)
-			wait = 1/self.f_cycle - ((time.time() - starttime)
-			if wait > 0:
-				time.sleep(wait)
+			time.sleep(1/self.f_cycle)
+			print(time.time()-starttime)
+			#wait = 1/self.f_cycle - ((time.time() - start_timer) % self.f_cycle)
 			#print(wait)
 			#time.sleep(wait)
 
@@ -581,7 +578,166 @@ class Cartesian_control:
 		plt.show()
 
 
+
+	#define paths from one point to another
+
+	def def_paths(self,points):
+		
+		self.f_cycle = 70
+		self.exp_time = 10 
+		dim = self.f_cycle*self.exp_time
+		n_points = len(points)
+
+		time_vect = []
+		posx_mat = np.zeros((n_points, self.f_cycle*self.exp_time))
+		posy_mat = np.zeros((n_points, self.f_cycle*self.exp_time))
+
+		
+		
+		
+		print(n_points)
+		j = 0
+		while j<n_points:
+
+			print("Processing:  Defining cartesian paths ....")
+
+			if j == 0:
+
+				time.sleep(0.5)
+				q1_read, q2_read, q3_read = self.get_position_joints_PSM()
+				x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
+				point_goal = points[j]
+				goal_x = point_goal[0]
+				goal_y = point_goal[1]
+
+			else:
+
+				point = points[j-1]
+				x_el = point[0]
+								
+				y_el = point[1]
+
+				point_goal = points[j]
+				goal_x = point_goal[0]
+				goal_y = point_goal[1]		
+		
+			dx = (goal_x - x_el)/dim
+			for i in range(0, self.f_cycle*self.exp_time):
+				posx_mat[j][i] = x_el
+				x_el = x_el + dx
+
+			dy = (goal_y - y_el)/dim
+			for i in range(0, self.f_cycle*self.exp_time):
+				posy_mat[j][i] = y_el
+				y_el = y_el + dy		
+
+			j = j+1			
+
+		return posx_mat, posy_mat
 	
+	
+	#define movement from a point to another
+
+	def reach_XY_force_control_continuous(self,x_v,y_v):
+
+		self.f_cycle = 70
+		self.exp_time = 10 
+		dim = self.f_cycle*self.exp_time
+
+		q1_r,q2_r,q3_r = self.get_position_joints_PSM()		
+
+		print("Moving arm ....")
+		j=0
+		time_now = 0
+		self.time_start_a = time.time()
+
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
+
+		z_v = np.zeros(dim)
+		xfk = np.zeros(dim)
+		yfk = np.zeros(dim)
+		zfk = np.zeros(dim)
+		self.graph_f_cycle = np.zeros(dim)
+		self.graph_fd_cycle = np.zeros(dim)
+		self.error_force_cycle = np.zeros(dim)
+
+		int_er_force = 0
+
+		while(j<self.f_cycle*self.exp_time):
+
+			self.count_time()
+			self.count_time_ef()
+			starttime=time.time()
+			self.time_start_a = time.time()
+
+			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r)
+
+			force_raw_now = psm_handle_mi.get_force()
+
+			#filter force read with moving average
+
+			count = count + 1
+			if count < window_size + 1:
+				window = np.append(window, force_raw_now)
+				self.force = force_raw_now
+			else:
+				for i in range(1, window_size):
+					window[i-1] = window[i]
+					if i == (window_size - 1):
+						window[i] = force_raw_now
+					sum = sum + window[i-1]
+				self.force = sum / window_size
+				sum = 0
+
+			#PI control on force
+
+			error = self.force_const - self.force
+			e_rel = error/self.force_const
+			self.P_value = (self.Kp * error)
+		
+			self.Integrator = self.Integrator + error
+			self.I_value = self.Integrator * self.Ki
+				
+			PID = self.P_value + self.I_value
+			zd = zfk[j] + PID*zfk[j]
+
+			z_v[j] = zd
+
+			#inverse kinematics to get joint positions. Joint positions used to set the new robot position in simulation
+
+			q1,q2,q3 = self.inverse_kinematics(x_v[j],y_v[j],z_v[j])
+			self.set_position_robot(q1,q2,q3)
+
+			self.graph_f_cycle[j] = self.force
+			self.graph_fd_cycle[j] = self.force_const
+			self.error_force_cycle[j] = e_rel
+			
+			j=j+1
+
+			time.sleep(1/self.f_cycle)
+			print(time.time()-starttime)
+	
+
+		self.graph_px = np.append(self.graph_px, x_v)
+		self.graph_py = np.append(self.graph_py, y_v)
+
+
+		for i in range (0,dim):
+
+			self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
+			self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
+			self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
+			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
+			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
+			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
+			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
+			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
+
 
 def main():
 
@@ -634,20 +790,49 @@ def main():
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
+	#define points
 
 	cart_c = Cartesian_control()
 	
-	
+	point1 = [0.09, 0.07]
+	point2 = [0.05, -0.01]
+	point3 = [0.01, 0.10]
+	points = [point1,point2,point3]
+
+	#define paths
+
+	posx_mat, posy_mat = cart_c.def_paths(points)
+
+	posx_vect = {}
+	for i in range(0,len(points)):
+		posx_vect[i]=[]
+		for j in range(0,cart_c.f_cycle*cart_c.exp_time):
+			posx_vect[i].append(posx_mat[i][j])
+
+	posy_vect = {}
+	for i in range(0,len(points)):
+		posy_vect[i]=[]
+		for j in range(0,cart_c.f_cycle*cart_c.exp_time):
+			posy_vect[i].append(posy_mat[i][j])
+
+	#approach to the body
+
 	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_XY_force_control(0.09, 0.07)
+
+	#execute movement through paths previously defined
+
+	for i in range(0,len(points)):
+		cart_c.reach_XY_force_control_continuous(posx_vect[i],posy_vect[i])
+	
+
+	#cart_c.approach_goal_Z(m_start)
+	#cart_c.reach_XY_force_control(0.09, 0.07)
 	#cart_c.reach_XY_force_control(0.05, -0.01)
 	#cart_c.reach_XY_force_control(0.01, 0.10)
 	#cart_c.reach_pos_XY(-0.04, 0.06, False)
 	#cart_c.reach_pos_XY(-0.04, 0.01, False)
 
 	
-	
-
 	
 	print('STEP1')	
 	#cart_c.plot_new()

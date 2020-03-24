@@ -159,7 +159,7 @@ data_to_plot_er2 = [error_jointc, error_cartc]
 
 
 fig, axes = plt.subplots(ncols=3, sharey=True)
-fig.suptitle('Force', fontsize=16)
+fig.suptitle('Force', fontsize=24)
 fig.subplots_adjust(wspace=0)
 
 name = 'Rigid Body'
@@ -182,7 +182,10 @@ for box in bp0['boxes']:
     for flier in bp0['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
 
-axes[0].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[0].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0)
+axes[0].set_xlabel(name, fontsize=18)
+axes[0].tick_params(labelsize=18)
+axes[0].set_ylabel('Force [N]', fontsize=18)
 axes[0].grid()
 
 name = 'Sponge'
@@ -205,7 +208,8 @@ for box in bp1['boxes']:
     for flier in bp1['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
 
-axes[1].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[1].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0, fontsize=18)
+axes[1].set_xlabel(name, fontsize=18)
 axes[1].grid()
 
 name = 'Cloth'
@@ -227,15 +231,17 @@ for box in bp2['boxes']:
 
     for flier in bp2['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
-axes[2].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[2].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0, fontsize=18)
+axes[2].set_xlabel(name, fontsize=18)
 axes[2].grid()
+
 
 plt.show()
 
 
 
 fig, axes = plt.subplots(ncols=3, sharey=True)
-fig.suptitle('Force_error', fontsize=16)
+fig.suptitle('Force_error', fontsize=24)
 fig.subplots_adjust(wspace=0)
 
 name = 'Rigid Body'
@@ -258,7 +264,10 @@ for box in bp0['boxes']:
     for flier in bp0['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
 
-axes[0].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[0].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0)
+axes[0].set_xlabel(name, fontsize=18)
+axes[0].tick_params(labelsize=18)
+axes[0].set_ylabel('Force_error_norm', fontsize=18)
 axes[0].grid()
 
 name = 'Sponge'
@@ -281,7 +290,8 @@ for box in bp1['boxes']:
     for flier in bp1['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
 
-axes[1].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[1].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0, fontsize=18)
+axes[1].set_xlabel(name, fontsize=18)
 axes[1].grid()
 
 name = 'Cloth'
@@ -303,7 +313,8 @@ for box in bp2['boxes']:
 
     for flier in bp2['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.2)
-axes[2].set(xticklabels=['Joint_control', 'Cart_control'], xlabel=name)
+axes[2].set_xticklabels(['Joint_control', 'Cart_control'],rotation=0, fontsize=18)
+axes[2].set_xlabel(name, fontsize=18)
 axes[2].grid()
 
 plt.show()
