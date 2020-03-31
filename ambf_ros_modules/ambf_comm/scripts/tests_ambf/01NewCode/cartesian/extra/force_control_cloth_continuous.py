@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+from __future__ import division
 # Import the Client from ambf_client package
 from ambf_client import Client
 import time
@@ -417,10 +418,15 @@ class Cartesian_control:
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
-		self.f_cycle = 70
-		self.exp_time = 10 
+		self.f_cycle = 50
+		self.exp_time = 5 
 		dim = self.f_cycle*self.exp_time
 
+		'''
+		f_cycle = 50
+		exp_time = 5 
+		dim = f_cycle*exp_time
+		'''
 		time_v, x_v, y_v = self.define_path(goal_x, goal_y)
 		q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 		time.sleep(1)	
@@ -455,7 +461,7 @@ class Cartesian_control:
 
 			self.count_time()
 			self.count_time_ef()
-			starttime=time.time()
+			
 			self.time_start_a = time.time()
 
 			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
@@ -503,11 +509,13 @@ class Cartesian_control:
 			
 			j=j+1
 
-			time.sleep(1/self.f_cycle)
-			print(time.time()-starttime)
-			#wait = 1/self.f_cycle - ((time.time() - start_timer) % self.f_cycle)
-			#print(wait)
-			#time.sleep(wait)
+			#time.sleep(1/self.f_cycle)
+			#print(time.time()-starttime)
+			wait = 1/self.f_cycle - (time.time() - self.time_start_a) 
+			#wait = 1/f_cycle - (time.time() - self.time_start_a) 
+			if wait>0:
+				time.sleep(wait)
+			print(time.time()-self.time_start_a)
 
 			
 		self.graph_px = np.append(self.graph_px, x_v)
@@ -583,8 +591,8 @@ class Cartesian_control:
 
 	def def_paths(self,points):
 		
-		self.f_cycle = 70
-		self.exp_time = 10 
+		self.f_cycle = 50
+		self.exp_time = 20 
 		dim = self.f_cycle*self.exp_time
 		n_points = len(points)
 
@@ -640,8 +648,8 @@ class Cartesian_control:
 
 	def reach_XY_force_control_continuous(self,x_v,y_v):
 
-		self.f_cycle = 70
-		self.exp_time = 10 
+		#self.f_cycle = 50
+		#self.exp_time = 15 
 		dim = self.f_cycle*self.exp_time
 
 		q1_r,q2_r,q3_r = self.get_position_joints_PSM()		
@@ -719,8 +727,10 @@ class Cartesian_control:
 			
 			j=j+1
 
-			time.sleep(1/self.f_cycle)
-			print(time.time()-starttime)
+			wait = 1/self.f_cycle - (time.time() - self.time_start_a) 
+			if wait>0:
+				time.sleep(wait)
+			print(time.time()-self.time_start_a)
 	
 
 		self.graph_px = np.append(self.graph_px, x_v)
@@ -737,6 +747,41 @@ class Cartesian_control:
 			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
 			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
 			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
+
+
+	def define_parabolic_path(self, goal_x):
+
+		print("Processing:  Defining cartesian parabolic path ....")
+		
+		time_vect = []
+		posx_vect = []
+		posy_vect = []
+		posz_vect = []
+
+		self.f_cycle = 50
+		self.exp_time = 15 
+		dim = self.f_cycle*self.exp_time
+
+		time_el = 0
+		for i in range(0, self.f_cycle*self.exp_time):
+			time_vect = np.append(time_vect, time_el)
+			time_el = time_el + 1/self.f_cycle
+
+		time.sleep(0.5)
+		q1_read, q2_read, q3_read = self.get_position_joints_PSM()
+		
+		x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
+	
+		
+		dx = (goal_x - x_el)/time_vect.size
+		for i in range(0, self.f_cycle*self.exp_time):
+
+			posx_vect = np.append(posx_vect, x_el)
+			y_el = (-32.28)*math.pow(x_el,2) - (61/285)*x_el + 0.11
+			posy_vect = np.append(posy_vect, y_el)
+			x_el = x_el + dx
+
+		return time_vect, posx_vect, posy_vect
 
 
 def main():
@@ -794,6 +839,8 @@ def main():
 
 	cart_c = Cartesian_control()
 	
+	#more continuous movement
+	'''
 	point1 = [0.09, 0.07]
 	point2 = [0.05, -0.01]
 	point3 = [0.01, 0.10]
@@ -824,9 +871,12 @@ def main():
 	for i in range(0,len(points)):
 		cart_c.reach_XY_force_control_continuous(posx_vect[i],posy_vect[i])
 	
+	'''
 
-	#cart_c.approach_goal_Z(m_start)
-	#cart_c.reach_XY_force_control(0.09, 0.07)
+	cart_c.approach_goal_Z(m_start)
+	cart_c.reach_XY_force_control(0.045, 0.035)
+	_,x_v,y_v = cart_c.define_parabolic_path(-0.05)
+	cart_c.reach_XY_force_control_continuous(x_v,y_v)
 	#cart_c.reach_XY_force_control(0.05, -0.01)
 	#cart_c.reach_XY_force_control(0.01, 0.10)
 	#cart_c.reach_pos_XY(-0.04, 0.06, False)

@@ -418,7 +418,7 @@ class Cartesian_control:
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
-		self.f_cycle = 70
+		self.f_cycle = 50
 		self.exp_time = 10 
 		dim = self.f_cycle*self.exp_time
 
@@ -506,10 +506,10 @@ class Cartesian_control:
 
 			#time.sleep(1/self.f_cycle)
 			#print(time.time()-starttime)
-			wait = 1/self.f_cycle - ((time.time() - starttime)
+			wait = 1/self.f_cycle - ((time.time() - starttime))
 			if wait > 0:
 				time.sleep(wait)
-			#print(wait)
+			print(time.time()-starttime)
 			#time.sleep(wait)
 
 			
