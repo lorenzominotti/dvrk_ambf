@@ -422,203 +422,6 @@ class Cartesian_control:
 			if (wait)>0:
 				time.sleep(wait)
 			print(self.force, time.time()-self.time_start_a)
-			
-			
-   			
-
-
-	 
-	#compute vector of time and of x y cartesian position, from the start position to the goal
-	
-	def define_path(self, goal_x, goal_y):
-		print("Processing:  Defining cartesian path ....")
-		
-		time_vect = []
-		posx_vect = []
-		posy_vect = []
-		posz_vect = []
-
-		time_el = 0
-		for i in range(0, self.f_cycle*self.exp_time):
-			time_vect = np.append(time_vect, time_el)
-			time_el = time_el + 1/self.f_cycle
-
-		time.sleep(0.5)
-		q1_read, q2_read, q3_read = self.get_position_joints_PSM()
-		
-		x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
-	
-		
-		dx = (goal_x - x_el)/time_vect.size
-		for i in range(0, self.f_cycle*self.exp_time):
-			posx_vect = np.append(posx_vect, x_el)
-			x_el = x_el + dx
-
-		dy = (goal_y - y_el)/time_vect.size
-		for i in range(0, self.f_cycle*self.exp_time):
-			posy_vect = np.append(posy_vect, y_el)
-			y_el = y_el + dy
-
-		return time_vect, posx_vect, posy_vect
-		
-	
-	'''
-
-	def compute_inverse_kinematics(self, time_vect, x_vect, y_vect, z_vect):
-		
-		print("Processing:  IK computation ....")
-		q1_vect = []
-		q2_vect = []
-		q3_vect = []
-
-		for i in range(0, time_vect.size):
-			q1, q2, q3 = self.inverse_kinematics(x_vect[i], y_vect[i], z_vect[i])
-			q1_vect = np.append(q1_vect, q1)
-			q2_vect = np.append(q2_vect, q2)
-			q3_vect = np.append(q3_vect, q3)
-
-		return q1_vect, q2_vect, q3_vect
-
-
-	def compute_forward_kinematics(self, time_vect, x_vect, y_vect, z_vect):
-		
-		print("Processing:  FK computation ....")
-		x1_vect = []
-		x2_vect = []
-		x3_vect = []
-
-		for i in range(0, time_vect.size):
-			x1, x2, x3 = self.forward_kinematics(x_vect[i], y_vect[i], z_vect[i])
-			x1_vect = np.append(x1_vect, x1)
-			x2_vect = np.append(x2_vect, x2)
-			x3_vect = np.append(x3_vect, x3)
-
-		return x1_vect, x2_vect, x3_vect
-
-	'''
-
-	#Cartesian control old
-
-	def reach_XY_force_control(self, goal_x, goal_y):
-
-		self.f_cycle = 50
-		self.exp_time = 10 
-		dim = self.f_cycle*self.exp_time
-
-		time_v, x_v, y_v = self.define_path(goal_x, goal_y)
-		q1_r,q2_r,q3_r = self.get_position_joints_PSM()
-		time.sleep(1)	
-		
-
-		print("Moving arm ....")
-		j=0
-		time_now = 0
-		new = True
-		self.time_start_a = time.time()
-
-		count = 0
-		window = []
-		window_size = 10
-		sum = 0
-		count1 = 0
-
-		z_v = np.zeros(dim)
-		xfk = np.zeros(dim)
-		yfk = np.zeros(dim)
-		zfk = np.zeros(dim)
-		self.graph_f_cycle = np.zeros(dim)
-		self.graph_fd_cycle = np.zeros(dim)
-		self.error_force_cycle = np.zeros(dim)
-
-		print(zfk[0])
-
-		#start_timer = time.time()
-		int_er_force = 0
-
-		while(j<self.f_cycle*self.exp_time):
-
-			self.count_time()
-			self.count_time_ef()
-			starttime=time.time()
-			self.time_start_a = time.time()
-
-			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
-			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r)
-
-			force_raw_now = psm_handle_mi.get_force()
-
-			#filter force read with moving average
-
-			count = count + 1
-			if count < window_size + 1:
-				window = np.append(window, force_raw_now)
-				self.force = force_raw_now
-			else:
-				for i in range(1, window_size):
-					window[i-1] = window[i]
-					if i == (window_size - 1):
-						window[i] = force_raw_now
-					sum = sum + window[i-1]
-				self.force = sum / window_size
-				sum = 0
-
-			#PI control on force
-
-			error = self.force_const - self.force
-			e_abs = error
-			e_rel = error/self.force_const
-			self.P_value = (self.Kp * error)
-		
-			self.Integrator = self.Integrator + error
-			self.I_value = self.Integrator * self.Ki
-				
-			PID = self.P_value + self.I_value
-			zd = zfk[j] + PID*zfk[j]
-
-			z_v[j] = zd
-
-			#inverse kinematics to get joint positions. Joint positions used to set the new robot position in simulation
-
-			q1,q2,q3 = self.inverse_kinematics(x_v[j],y_v[j],z_v[j])
-			self.set_position_robot(q1,q2,q3)
-			#'''
-			self.graph_f_cycle[j] = self.force
-			self.graph_fd_cycle[j] = self.force_const
-			self.error_force_cycle[j] = e_rel
-			#'''
-
-			self.publish_to_plot(e_abs, e_rel, x_v[j], y_v[j], z_v[j], xfk[j], yfk[j], zfk[j])
-			
-			j=j+1
-
-			#time.sleep(1/self.f_cycle)
-			#print(time.time()-starttime)
-			wait = 1/self.f_cycle - ((time.time() - starttime))
-			if wait > 0:
-				time.sleep(wait)
-			print(time.time()-starttime)
-			#time.sleep(wait)
-
-	
-		self.graph_px = np.append(self.graph_px, x_v)
-		self.graph_py = np.append(self.graph_py, y_v)
-
-
-		for i in range (0,dim):
-
-			self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
-			self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
-			self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
-			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
-			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
-			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
-			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
-			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
-		
-
-
-		
-		
 
 
 	def plot_new(self):
@@ -761,7 +564,7 @@ class Cartesian_control:
 			self.time_start_a = time.time()
 
 			########################################################
-			pos = psm_handle_trl.get_pos()
+			pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
 			pz = pos.z + self.deltaZ
 			########################################################
 
@@ -818,22 +621,7 @@ class Cartesian_control:
 				time.sleep(wait)
 			print(time.time()-self.time_start_a)
 	
-		'''
-		self.graph_px = np.append(self.graph_px, x_v)
-		self.graph_py = np.append(self.graph_py, y_v)
-
-
-		for i in range (0,dim):
-
-			self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
-			self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
-			self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
-			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
-			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
-			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
-			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
-			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
-		'''
+		
 
 	def define_parabolic_path(self, goal_x):
 
@@ -916,7 +704,6 @@ def main():
 	time.sleep(2)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
-	#psm_handle_pfl.set_joint_pos(0, math.radians(30))
 	m_start = 0.185
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
@@ -925,9 +712,12 @@ def main():
 
 	cart_c = Cartesian_control()
 
-	###############tip position in psm ref frame#################
+	############### tip position in psm ref frame #################
+
+	# if I want to plot Z given by AMBF function
+
 	time.sleep(1)
-	pos = psm_handle_trl.get_pos()
+	pos = psm_handle_trl.get_pos() #AMBF function
 	pz = pos.z
 	q1, q2, q3 = cart_c.get_position_joints_PSM()
 	xfk, yfk, zfk, = cart_c.forward_kinematics(q1,q2,q3)
@@ -994,28 +784,7 @@ def main():
 	cart_c.pub_f.publish(stop)
 	
 	
-	############## cartesian NOT continuous #############
-	'''
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_XY_force_control(0.09, 0.07)
-
-	stop = 100
-	cart_c.pub_f.publish(stop)
-
-
-	'''
-	####################  parabolic  ####################
-	'''
-	cart_c.reach_XY_force_control(0.045, 0.035)
-	_,x_v,y_v = cart_c.define_parabolic_path(-0.05)
-	cart_c.reach_XY_force_control_continuous(x_v,y_v)
-	'''
-	#####################################################
-
-	#cart_c.reach_XY_force_control(0.05, -0.01)
-	#cart_c.reach_XY_force_control(0.01, 0.10)
-	#cart_c.reach_pos_XY(-0.04, 0.06, False)
-	#cart_c.reach_pos_XY(-0.04, 0.01, False)
+	
 
 	
 	
