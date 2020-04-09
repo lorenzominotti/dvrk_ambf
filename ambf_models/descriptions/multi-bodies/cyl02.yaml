@@ -15,7 +15,8 @@ BODY Cyl02:
   collision margin: 0.001
   scale: 1.0
   location:
-    orientation: {p: -0.0, r: 0.0, y: 3.14}
+    orientation: {p: -0.0, r: 0.0, y: 4.71}
+#4.71}
     position: {x: 0.5, y: 0.0, z: -0.5}
   color: blue
   publish joint names: true

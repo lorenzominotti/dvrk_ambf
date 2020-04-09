@@ -685,7 +685,7 @@ class Cartesian_control:
 		#self.set_position_robot(0, 0, 0.12)
 
 	def mainInsertionLinkIK(self):
-		step = 0.5
+		step = 5
 		for angle in np.arange(0.09, 360+step, step):
 			q3 = -0.18+0.06*(np.sin(math.radians(angle)))
 			self.graph_q3_set0 = np.append(self.graph_q3_set0, q3)

@@ -82,7 +82,7 @@ time.sleep(1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
 time.sleep(1)
-m = 0.18
+m = 0.16
 psm_handle_pel.set_joint_pos(0, m)
 time.sleep(1)
 print(psm_handle_trl.get_pos())

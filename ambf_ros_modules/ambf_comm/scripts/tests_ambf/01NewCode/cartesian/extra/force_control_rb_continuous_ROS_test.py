@@ -82,7 +82,7 @@ class Cartesian_control:
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.0005 #0.0001 originally
+	delta_m_start = 0.0001 #0.0001 originally
 	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
@@ -101,7 +101,8 @@ class Cartesian_control:
 	pi = math.pi
 	l_RCC = 0.4318
 	l_tool_original = 0.4162
-	l_tool = 0.05 + l_tool_original
+	deltalen = 0.05
+	l_tool = deltalen + l_tool_original
 
 	#Kp_start = 0.000001
 	#Ki_start = 0.000001
@@ -122,14 +123,12 @@ class Cartesian_control:
 	flag_first_pos = True
 
 	
-	Kp = 0.006 #goooood
-	Ki = 0.000005
-	
+	Kp = 0.002 #rqt_plot
+	Ki = 0.0005
 	'''
-	Kp = 0.00005 #bad
-	Ki = 0.000001
+	Kp = 0.000001
+	Ki = 0.00000008
 	'''
-
 	Integrator = 0
 	Integratorx = 0
 	Integratory = 0
@@ -187,7 +186,7 @@ class Cartesian_control:
 		r = math.sqrt(math.pow(X_des,2)+math.pow(Y_des,2)+math.pow(Z_des,2))
 
 		q1 = math.asin((X_des)/(math.sqrt(math.pow(X_des,2)+math.pow(Z_des,2))))
-		q2 = math.asin(-Y_des/r)
+		q2 = -math.asin(Y_des/r)
 		q3 = self.l_RCC - self.l_tool + r
 
 		return q1, q2, q3
@@ -234,7 +233,7 @@ class Cartesian_control:
 		self.jac[2,1] = math.cos(qj1)*math.sin(qj2)*(self.l_tool-self.l_RCC+qj3) 
 		self.jac[2,2] = -math.cos(qj1)*math.cos(qj2)
 
-		return self.jac
+		return jac
 		
 
 
@@ -242,7 +241,7 @@ class Cartesian_control:
 	def count_time(self):
 		time_end_a = time.time()
 		self.deltat_a = (time_end_a-self.time_start_a) + self.deltat_a 
-		#self.time = np.append(self.time, self.deltat_a)
+		self.time = np.append(self.time, self.deltat_a)
 
 	def count_time_ef(self):
 		time_end_a_ef = time.time()
@@ -340,12 +339,10 @@ class Cartesian_control:
 		while self.m < self.limit_mi:
 			
 			self.time_start_a = time.time()
-
-			########################################################
+			###########################################################
 			pos = psm_handle_trl.get_pos()
-			pz = pos.z + self.deltaZ
-			########################################################
-
+			pz = pos.z
+			###########################################################
 			#_,_,force_raw_now = psm_handle_mi.get_force()
 			force_raw_now = psm_handle_mi.get_force()
 			self.force = force_raw_now
@@ -372,12 +369,13 @@ class Cartesian_control:
 
 			if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
 				self.count_mi_loop = self.count_mi_loop + 1
-			if self.count_mi_loop == 50:
+				#print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+			if self.count_mi_loop == 5:
 				self.count_mi_loop = 0
 				break
 
 		
-			#'''
+			'''
 			psm_handle_pel.set_joint_pos(0, self.m)
 			force_old2 = force_old1
 			force_old1 = self.force
@@ -404,7 +402,7 @@ class Cartesian_control:
 			self.er_y = np.append(self.er_y, ey)
 			ez = 0
 			self.er_z = np.append(self.er_z, ez)
-			#'''
+			'''
 			self.count_time()
 
 
@@ -416,7 +414,7 @@ class Cartesian_control:
 
 			if (wait)>0:
 				time.sleep(wait)
-			print(self.force, (time.time()-self.time_start_a)) 
+			print(self.force, time.time()-self.time_start_a)
 			
 			
    			
@@ -582,7 +580,7 @@ class Cartesian_control:
 			self.error_force_cycle[j] = e_rel
 			#'''
 
-			self.publish_to_plot(e_abs, e_rel, x_v[j], y_v[j], z_v[j], xfk[j], yfk[j], zfk[j], )
+			self.publish_to_plot(e_abs, e_rel, x_v[j], y_v[j], z_v[j], xfk[j], yfk[j], zfk[j])
 			
 			j=j+1
 
@@ -757,9 +755,8 @@ class Cartesian_control:
 
 			########################################################
 			pos = psm_handle_trl.get_pos()
-			pz = pos.z + self.deltaZ
+			pz = pos.z
 			########################################################
-
 
 			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r)
@@ -902,6 +899,14 @@ def main():
 	name_joints_base = psm_handle_base.get_joint_names()
 	print(name_joints_base)
 
+	##############  ROS  ###############
+
+	
+
+
+
+
+
 
 
 	raw_input("Display movement...")
@@ -914,16 +919,14 @@ def main():
 	time.sleep(2)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
-	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.155
+	#psm_handle_pfl.set_joint_pos(0, math.radians(30))
+	m_start = 0.2
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
 	#define points
 
 	cart_c = Cartesian_control()
-
-	###############tip position in psm ref frame#################
 	time.sleep(1)
 	pos = psm_handle_trl.get_pos()
 	pz = pos.z
@@ -934,93 +937,13 @@ def main():
 	print("pos Z in RFpsm:     ", zfk)
 	print("\n\n")
 
-	cart_c.deltaZ = abs(pz-zfk)
+	deltaz = abs(pz-zfk)
 	
-	print("deltaZ:				", cart_c.deltaZ)
+	print("deltaZ:				", deltaz)
+	print("new posZ in RFsim:	", pz+deltaz)
 
-
-	if pz>zfk:
-		cart_c.deltaZ = -cart_c.deltaZ
-	if pz<zfk:
-		cart_c.deltaZ = cart_c.deltaZ
-
-	#############################################################
-	
-	cart_c.init_ROS()
-
-
-
-	################ cartesian continuous ###############
-	'''
-	point1 = [0.09, 0.05]
-	point2 = [0.05, -0.02]
-	point3 = [0.01, 0.10]
-	'''
-	point1 = [0.05, 0.02]
-	point2 = [-0.02, 0.04]
-	point3 = [0.10, -0.02]
-	
-	points = [point1,point2,point3]
-
-	#define paths
-
-	posx_mat, posy_mat = cart_c.def_paths(points)
-
-	posx_vect = {}
-	for i in range(0,len(points)):
-		posx_vect[i]=[]
-		for j in range(0,cart_c.f_cycle*cart_c.exp_time):
-			posx_vect[i].append(posx_mat[i][j])
-
-	posy_vect = {}
-	for i in range(0,len(points)):
-		posy_vect[i]=[]
-		for j in range(0,cart_c.f_cycle*cart_c.exp_time):
-			posy_vect[i].append(posy_mat[i][j])
-
-	#approach to the body
-
-	cart_c.approach_goal_Z(m_start)
-
-	#execute movement through paths previously defined
-
-	for i in range(0,len(points)):
-		cart_c.reach_XY_force_control_continuous(posx_vect[i],posy_vect[i])
-
-	stop = 100
-	cart_c.pub_f.publish(stop)
-	
-	
-	############## cartesian NOT continuous #############
-	'''
-	cart_c.approach_goal_Z(m_start)
-	cart_c.reach_XY_force_control(0.09, 0.07)
-
-	stop = 100
-	cart_c.pub_f.publish(stop)
-
-
-	'''
-	####################  parabolic  ####################
-	'''
-	cart_c.reach_XY_force_control(0.045, 0.035)
-	_,x_v,y_v = cart_c.define_parabolic_path(-0.05)
-	cart_c.reach_XY_force_control_continuous(x_v,y_v)
-	'''
-	#####################################################
-
-	#cart_c.reach_XY_force_control(0.05, -0.01)
-	#cart_c.reach_XY_force_control(0.01, 0.10)
-	#cart_c.reach_pos_XY(-0.04, 0.06, False)
-	#cart_c.reach_pos_XY(-0.04, 0.01, False)
 
 	
-	
-	print('STEP1')	
-	#cart_c.plot_new()
-
-	#cart_c.plots()
-
 
 	raw_input("Let's clean up. Press Enter to continue...")
 	# Lastly to cleanup

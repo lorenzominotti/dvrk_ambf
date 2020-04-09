@@ -1,16 +1,18 @@
 #!/usr/bin/env python2.7
+from __future__ import division
 # Import the Client from ambf_client package
 from ambf_client import Client
 import time
 import math
 import rospy
-import tf
+from std_msgs.msg import Float64
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
 from scipy import signal
-import numpy as np
-from scipy.signal import butter,filtfilt
-import adaptfilt
+from numpy import asarray
+from numpy import savetxt
 
 # Create a instance of the client
 _client = Client()
@@ -40,6 +42,7 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 class Joint_control:
 	
+	#matplotlib.rc('font', **font)
 	error_force2 = []
 	graph_f2 = []
 
@@ -77,6 +80,7 @@ class Joint_control:
 	graph_fd = []
 	q1_plot = []
 	q2_plot = []
+	error_abs = []
 	posX = 0
 	posY = 0
 	posZ = 0
@@ -105,7 +109,10 @@ class Joint_control:
 	
 	#Kp = 0.006 #rqt_plot
 	#Ki = 0.000035
-
+	'''
+	Kp = 0.004 #good
+	Ki = 0.00005
+	'''
 	Kp = 0.003 #rqt_plot
 	Ki = 0.00005
 
@@ -130,6 +137,11 @@ class Joint_control:
 
 	def approach_goal_Z(self, m_start):
 		self.m = m_start
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
 		force_old2 = 0
 		force_old1 = 0
 		while self.m < self.limit_mi:
@@ -137,13 +149,20 @@ class Joint_control:
 			self.time_start_a = time.time()
 			force_raw_now = psm_handle_mi.get_force()
 			self.force = force_raw_now
+			#print(self.force)
+			count = count + 1
+			if count < window_size + 1:
+				window = np.append(window, force_raw_now)
+				self.force = force_raw_now
+			else:
+				for i in range(1, window_size):
+					window[i-1] = window[i]
+					if i == (window_size - 1):
+						window[i] = force_raw_now
+					sum = sum + window[i-1]
+				self.force = sum / window_size
+				sum = 0
 			print(self.force)
-			average = (force_old2 + force_old1)/2
-			if(self.force > (average + self.delta)) or (self.force < (average - self.delta)):
-				self.force = force_old1
-				print('\n')
-				print('UNEXPECTED_PEAK..........COMPENSATION')
-				print('\n')
 
 			if self.force > (self.force_const + self.band):
 				self.m = self.m - self.delta_m_start/2
@@ -163,6 +182,7 @@ class Joint_control:
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
+			self.error_abs = np.append(self.error_abs, 0)
 			#self.count_time_ef()
 			PID = 1
 			self.graph_m = np.append(self.graph_m, self.m)
@@ -207,7 +227,7 @@ class Joint_control:
 			path_long = path_y
 			path_short = path_x
 
-		d_degree_long = 0.15
+		d_degree_long = 0.1
 		d_degree_short = (path_short / path_long) * d_degree_long
 		if path_x >= path_y:
 			dx = d_degree_long
@@ -306,6 +326,7 @@ class Joint_control:
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.graph_f2 = np.append(self.graph_f2, self.force)
 			self.error_force2 = np.append(self.error_force2, e_rel)
+			self.error_abs = np.append(self.error_abs, error)
 			self.count_time()
 			self.error_force = np.append(self.error_force, e_rel)
 			q1,q2,_= self.get_position_joints_PSM()
@@ -337,9 +358,45 @@ class Joint_control:
 		time_ef = []
 		time2 = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_joint_error.csv', self.error_force2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_time.csv', time2, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_error.csv', self.error_abs, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_fd.csv', self.graph_fd, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_q1.csv', self.q1_plot, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_rb_joint_q2.csv', self.q2_plot, delimiter=",")
+
+		font = {'family' : 'normal',
+       		#'weight' : 'normal',
+        	'size'   : 20}
+
+		matplotlib.rc('font', **font)
+	
+		#fdim = 12
+		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig.subplots_adjust(hspace=0.25)
+
+		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
+		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
+		axs[0].set(ylabel = 'Force [N]')	
+		axs[0].legend(loc='best')
+		axs[0].set_title('RIGID BODY', fontsize=26)
+		axs[0].grid()
+
+		axs[1].plot(time, self.error_abs, color = 'r', label = "abs_error")
+		axs[1].set(ylabel = 'Abs_F_err [N]')
+		axs[1].legend(loc='best')
+		axs[1].grid()
+
+		axs[2].plot(time, self.q1_plot, label = "joint 1")
+		axs[2].plot(time, self.q2_plot, label = "joint 2")
+		axs[2].set(xlabel = 'Time [s]', ylabel = 'Joints values [deg]')
+		axs[2].legend(loc='best')
+		axs[2].grid()
+
+		plt.show()
+
+		
+		'''
 
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -361,6 +418,7 @@ class Joint_control:
 		axs[2].grid()
 		plt.show()
 
+		'''
 
 def main():
 
@@ -404,20 +462,20 @@ def main():
 	#time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
-	m_start = 0.16
+	m_start = 0.175
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(1)
 	print(psm_handle_trl.get_pos())
 
-	psm_handle_pel.set_joint_pos(0, math.radians(0))
+	#psm_handle_pel.set_joint_pos(0, math.radians(0))
 	#psm_handle_tyl.set_joint_pos(1, math.radians(-20))
 	#time.sleep(1)
 	
 	joint_c = Joint_control()
 	joint_c.approach_goal_Z(m_start)
-	joint_c.reach_XY_force_control(-0.07, -0.09, True)
-	joint_c.reach_XY_force_control(0.01, -0.05, False)
-	joint_c.reach_XY_force_control(-0.10, -0.01, False)
+	joint_c.reach_XY_force_control(-0.09, -0.05, True)
+	joint_c.reach_XY_force_control(-0.05, 0.02, False)
+	joint_c.reach_XY_force_control(-0.01, -0.10, False)
 	joint_c.plots()
 
 	'''

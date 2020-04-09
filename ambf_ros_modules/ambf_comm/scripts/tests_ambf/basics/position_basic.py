@@ -93,15 +93,42 @@ def main():
 
 	psm_handle_pel.set_joint_pos(0, 0)
 	psm_handle_pfl.set_joint_pos(0,  math.radians(0))
-	psm_handle_base.set_joint_pos(0, math.radians(30))
+	psm_handle_base.set_joint_pos(0, math.radians(0))
 	time.sleep(2)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.155
+	m_start = 0.16
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
+	flag = 0
+	i = 0
+	z = []
+	while i < 40:
+		psm_handle_pfl.set_joint_pos(0, math.radians(i))
+		pos = psm_handle_trl.get_pos()
+		posY = pos.y
+		posZ = pos.z
+		if flag == 0:
+			startY = pos.y
+			flag = 1
+		print(posZ)
+		z = np.append(z,posZ)
+		i = i + 0.02
+	
+	Y = posY - startY
+
+	print('\n\n\n')
+	print('Y dist:       ', Y)
+	print('\n\n\n')
+
+
+	plt.figure()
+	plt.plot(z)
+	plt.grid()
+	plt.show()
+
 
 
 

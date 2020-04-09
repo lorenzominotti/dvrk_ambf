@@ -139,7 +139,7 @@ class Cartesian_control:
 		#self.q1 = 0.5*(math.acos((math.pow(Z_des,2)-math.pow(X_des,2))/(math.pow(X_des,2)+math.pow(Z_des,2))))   #original
 
 		q1 = math.asin((X_des)/(math.sqrt(math.pow(X_des,2)+math.pow(Z_des,2))))
-		q2 = math.asin(-Y_des/r)
+		q2 = -math.asin(Y_des/r)
 		q3 = self.l_RCC - self.l_tool + r
 
 		return q1, q2, q3
@@ -363,10 +363,13 @@ class Cartesian_control:
 			time_vect = np.append(time_vect, time_el)
 			time_el = time_el + 1/self.f_cycle
 
-		time.sleep(0.5)
+		#self.set_position_robot(0, 0, -0.22)
+		#time.sleep(3)
 		q1_read, q2_read, q3_read = self.get_position_joints_PSM()
 		
 		x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
+		print("ZELLLLLLL:       ", z_el)
+		print("z_GOALLLL:       ", goal_z)
 	
 		
 		dx = (goal_x - x_el)/time_vect.size
@@ -378,11 +381,12 @@ class Cartesian_control:
 		for i in range(0, self.f_cycle*self.exp_time):
 			posy_vect = np.append(posy_vect, y_el)
 			y_el = y_el + dy
-
+		
 		dz = (goal_z - z_el)/time_vect.size
 		for i in range(0, self.f_cycle*self.exp_time):
 			posz_vect = np.append(posz_vect, z_el)
 			z_el = z_el + dz
+		
 
 		
 
@@ -439,11 +443,14 @@ class Cartesian_control:
 
 	def reach_XY_pos_control(self, goal_x, goal_y, goal_z, start):
 
-		self.f_cycle = 10
+		self.f_cycle = 40
 		self.exp_time = 10
+		dim = self.f_cycle*self.exp_time
 
 		time_v, x_v, y_v, z_v = self.define_path(goal_x, goal_y, goal_z, start)
 		q1_v, q2_v, q3_v = self.compute_inverse_kinematics(time_v, x_v, y_v, z_v)
+		self.set_position_robot(q1_v[0], q2_v[0], q3_v[0])
+		time.sleep(2)
 		#self.xr_plot, self.yr_plot, self.zr_plot = self.compute_forward_kinematics(time_v, q1_v, q2_v, q3_v)
 
 		print("Moving arm ....")
@@ -451,20 +458,24 @@ class Cartesian_control:
 		time_now = 0
 		#starttime=time.time()
 		self.time_start_a = time.time()
+		self.xr_plot = np.zeros(dim)
+		self.yr_plot = np.zeros(dim)
+		self.zr_plot = np.zeros(dim)
+
 		while(j<self.f_cycle*self.exp_time):
 			self.count_time()
 			starttime=time.time()
 			self.time_start_a = time.time()
 			self.set_position_robot(q1_v[j], q2_v[j], q3_v[j])
-			j=j+1
+			
 
 			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 			xfk,yfk,zfk = self.forward_kinematics(q1_r,q2_r,q3_r)
-			self.xr_plot = np.append(self.xr_plot, xfk)
-			self.yr_plot = np.append(self.yr_plot, yfk)
-			self.zr_plot = np.append(self.zr_plot, zfk)
+			self.xr_plot[j] = xfk
+			self.yr_plot[j] = yfk
+			self.zr_plot[j] = zfk
 			
-			
+			j=j+1
 			time.sleep(1/self.f_cycle)
 			
 			print(time.time() - self.time_start_a, 1/self.f_cycle - (time.time() - starttime))
@@ -587,7 +598,7 @@ def main():
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.155
+	m_start =  0.16095557808876038
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
@@ -611,8 +622,16 @@ def main():
 	cart_c.reach_XY_pos_control(0.09, -0.07, -0.22, True)
 	cart_c.reach_XY_pos_control(0.05, -0.01, -0.18, False)
 	'''
-	cart_c.reach_XY_pos_control(0.09, 0.07, -0.22, True)
-	cart_c.reach_XY_pos_control(0.05, 0.03, -0.22, False)
+	time.sleep(3)
+	q1,q2,q3 = cart_c.get_position_joints_PSM()
+	_,_,zFK = cart_c.forward_kinematics(q1,q2,q3)
+	print("FK START:   ", zFK)
+	print("Q3 START:   ", q3)
+
+
+
+	cart_c.reach_XY_pos_control(0.0, 0.1, -0.196, True)
+	#cart_c.reach_XY_pos_control(0.0, 0.1, -0.22, False)
 	#cart_c.reach_pos_XY(-0.04, 0.06, False)
 	#cart_c.reach_pos_XY(-0.04, 0.01, False)
 	

@@ -77,12 +77,11 @@ class Cartesian_control:
 	er_z = []
 	graph_px = []
 	graph_py = []
-	pz = []
 
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.0005 #0.0001 originally
+	delta_m_start = 0.0003 #0.0001 originally
 	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
@@ -121,15 +120,20 @@ class Cartesian_control:
 
 	flag_first_pos = True
 
-	
-	Kp = 0.006 #goooood
-	Ki = 0.000005
-	
 	'''
-	Kp = 0.00005 #bad
-	Ki = 0.000001
-	'''
+	Kp = 0.0002 #good2  <--------
+	Ki = 0.000008
 
+	Kp = 0.0004 #bad2
+	Ki = 0.0000008
+	'''
+	Kp = 0.000002 #bad3 <--------
+	Ki = 0.0000008
+	
+	'''
+	Kp = 0.000001
+	Ki = 0.00000008
+	'''
 	Integrator = 0
 	Integratorx = 0
 	Integratory = 0
@@ -372,7 +376,7 @@ class Cartesian_control:
 
 			if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
 				self.count_mi_loop = self.count_mi_loop + 1
-			if self.count_mi_loop == 50:
+			if self.count_mi_loop == 5:
 				self.count_mi_loop = 0
 				break
 
@@ -582,7 +586,7 @@ class Cartesian_control:
 			self.error_force_cycle[j] = e_rel
 			#'''
 
-			self.publish_to_plot(e_abs, e_rel, x_v[j], y_v[j], z_v[j], xfk[j], yfk[j], zfk[j], )
+			self.publish_to_plot(e_abs, e_rel, x_v[j], y_v[j], z_v[j], xfk[j], yfk[j], zfk[j])
 			
 			j=j+1
 
@@ -760,7 +764,6 @@ class Cartesian_control:
 			pz = pos.z + self.deltaZ
 			########################################################
 
-
 			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r)
 
@@ -812,7 +815,8 @@ class Cartesian_control:
 			wait = 1/self.f_cycle - (time.time() - self.time_start_a) 
 			if wait>0:
 				time.sleep(wait)
-			print(time.time()-self.time_start_a)
+			#print(time.time()-self.time_start_a)
+			print(self.force)
 	
 		'''
 		self.graph_px = np.append(self.graph_px, x_v)
@@ -902,7 +906,7 @@ def main():
 	name_joints_base = psm_handle_base.get_joint_names()
 	print(name_joints_base)
 
-
+	
 
 	raw_input("Display movement...")
 
@@ -938,7 +942,6 @@ def main():
 	
 	print("deltaZ:				", cart_c.deltaZ)
 
-
 	if pz>zfk:
 		cart_c.deltaZ = -cart_c.deltaZ
 	if pz<zfk:
@@ -951,6 +954,7 @@ def main():
 
 
 	################ cartesian continuous ###############
+	
 	'''
 	point1 = [0.09, 0.05]
 	point2 = [0.05, -0.02]
@@ -958,7 +962,7 @@ def main():
 	'''
 	point1 = [0.05, 0.02]
 	point2 = [-0.02, 0.04]
-	point3 = [0.10, -0.02]
+	point3 = [0.09, -0.02]
 	
 	points = [point1,point2,point3]
 
