@@ -20,7 +20,7 @@ BODY base link:
   collision margin: 0.001
   scale: 1.0
   location:
-    orientation: {p: -0.0, r: 0.0, y: 3.14} #standard
+    orientation: {p: 0.00, r: 0.00, y: 3.14} #standard
 #    position: {x: 1.5, y: 0.3, z: 0.25} #random
 #    orientation: {p: -0.0, r: 0.0, y: 1.57} #puzzle
 #    position: {x: 0.5, y: 1.0, z: 0.05} #position for cloth

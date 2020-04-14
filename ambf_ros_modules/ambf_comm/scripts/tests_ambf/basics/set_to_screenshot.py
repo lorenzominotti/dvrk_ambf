@@ -36,6 +36,7 @@ psm_handle_tgl1 = _client.get_obj_handle('psm/toolgripper1link')
 psm_handle_tpl = _client.get_obj_handle('psm/toolpitchlink')
 psm_handle_tyl = _client.get_obj_handle('psm/toolyawlink')
 psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
+psm_handle_ptl = _client.get_obj_handle('psm/pitchtoplink')
 
 
 
@@ -79,17 +80,40 @@ def main():
 	raw_input("Display movement...")
 
 	psm_handle_pel.set_joint_pos(0, 0)
-	psm_handle_pfl.set_joint_pos(0, math.radians(-30))
-	psm_handle_base.set_joint_pos(0, math.radians(-30))
+	psm_handle_pfl.set_joint_pos(0, math.radians(30))
+	psm_handle_base.set_joint_pos(0, math.radians(0))
 	time.sleep(2)
 	#psm_handle_mi.set_joint_pos(0, 0)
-	psm_handle_pel.set_joint_pos(0, math.radians(30))
+	#psm_handle_pel.set_joint_pos(0, math.radians(20))
 	time.sleep(1)
 	#psm_handle_pel.set_joint_pos(0, 0.1)
 	#time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
 	m_start = 0.20
 	psm_handle_pel.set_joint_pos(0, m_start)
+
+	print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	#print(psm_handle_base.get_all_joint_pos())
+	time.sleep(5)
+
+	print("option1")
+	rad1 = psm_handle_ptl.get_joint_pos(2)
+	grad1 = rad1*180/3.14
+	print(grad1)
+	print("\n")
+	print("option2")
+	rad2 = psm_handle_base.get_joint_pos(3)
+	grad2 = rad2*180/3.14
+	print(grad2)
+	print("\n")
+	print("option3")
+	rad3 = -psm_handle_base.get_joint_pos(2)
+	grad3 = rad3*180/3.14
+	print(grad3)
+
+	
+
+
 	
 
 	

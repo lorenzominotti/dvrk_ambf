@@ -250,7 +250,6 @@ class Cartesian_control:
 		time = self.time
 		time_ef = []
 		time_ef = self.time_ef
-
 		fig, axs = plt.subplots(nrows = 2)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -263,7 +262,6 @@ class Cartesian_control:
 		axs[1].set(xlabel = 'Time [s]', ylabel = 'Force_error_norm')
 		axs[1].legend(loc='best')
 		axs[1].grid()
-
 		plt.show()
 	'''
 	
@@ -631,7 +629,7 @@ def main():
 
 
 	cart_c.reach_XY_pos_control(0.0, 0.1, -0.196, True)
-	#cart_c.reach_XY_pos_control(0.0, 0.1, -0.22, False)
+	cart_c.reach_XY_pos_control(0.02, 0.04, -0.196, False)
 	#cart_c.reach_pos_XY(-0.04, 0.06, False)
 	#cart_c.reach_pos_XY(-0.04, 0.01, False)
 	
@@ -658,15 +656,12 @@ vettore_tempi=0:0.01:10 vettore di durata*frequenza elementi
 vttore posizioni x= qualcosa che va calcolato, lungo ESATTAMENTE COME VETTORE TEMPI  
 vttore posizioni y= qualcosa che va calcolato, lungo ESATTAMENTE COME VETTORE TEMPI
 vttore posizioni z= qualcosa che va calcolato, lungo ESATTAMENTE COME VETTORE TEMPI (solo pler verificare controllo posizione)
-
 p=1
 i=1
-
 def calcolo_cin_inversa():
 	for i=0:length(vettore_tempi)
 		q(i)=cin_inversa(vttore posizioni x(i),vttore posizioni y(i),vttore posizioni z(i))
 	end
-
 def move_to_joint_pos(self):
 	j=0
 	while(j<FREQUENZA_CICLO*DURATA_ESPERIMENTO)
@@ -683,13 +678,10 @@ def move_to_joint_pos(self):
 		errore_forza=foza_desiderata-forza(z)
 		
 		integrale errore forza= integrale_errore_forza + (1/FREQUENZA_CICLO)*errore forza
-
 		variazione_z=p*errore_forza+i*integrale_errore_forza
 		z_desiderata=z_attuale+variazione_z
 		q_new=cin_inversa(vttore posizioni x(j),vttore posizioni y(ij,z_desiderata)
-
 		robot.goto(q_new)
-
 		sleep(1/FREQUENZA_CICLO)
 	end
 '''

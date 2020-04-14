@@ -82,13 +82,13 @@ class Client:
                         if obj_name == 'World' or obj_name == 'world':
                             self._world_name = obj_name
                             obj = World(obj_name)
-                            obj._sub = rospy.Subscriber(self._ros_topics[i][j], WorldState, obj.ros_cb)
+                            obj._sub = rospy.Subscriber(self._ros_topics[i][j], WorldState, obj.ros_cb, queue_size = 1, buff_size=2**24)
                             pub_topic_str = self._search_prefix_str + obj_name + self._string_cmd
                             obj._pub = rospy.Publisher(name=pub_topic_str, data_class=WorldCmd, queue_size=10)
                         else:
                             obj = Object(obj_name)
                             obj.set_name(obj_name)
-                            obj._sub = rospy.Subscriber(self._ros_topics[i][j], ObjectState, obj.ros_cb)
+                            obj._sub = rospy.Subscriber(self._ros_topics[i][j], ObjectState, obj.ros_cb, queue_size = 1, buff_size=2**24)
                             pub_topic_str = self._search_prefix_str + obj_name + self._string_cmd
                             obj._pub = rospy.Publisher(name=pub_topic_str, data_class=ObjectCmd, tcp_nodelay=True, queue_size=10)
 

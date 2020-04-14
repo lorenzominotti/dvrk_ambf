@@ -35,6 +35,7 @@ psm_handle_base = _client.get_obj_handle('psm/baselink')
 psm_handle_yaw = _client.get_obj_handle('psm/yawlink')
 psm_handle_mi = _client.get_obj_handle('psm/maininsertionlink')
 psm_handle_pfl = _client.get_obj_handle('psm/pitchfrontlink')
+psm_handle_ptl = _client.get_obj_handle('psm/pitchtoplink')
 psm_handle_pbl = _client.get_obj_handle('psm/pitchbottomlink')
 psm_handle_pel = _client.get_obj_handle('psm/pitchendlink')
 psm_handle_tgl1 = _client.get_obj_handle('psm/toolgripper1link')
@@ -52,6 +53,19 @@ class Cartesian_control:
 	yr_plot = []
 	zr_plot = []
 	time_plot = []
+	q1_r = []
+	q2_r = []
+	q3_r = []
+	px = []
+	py = []
+	pz = []
+	deltaX = []
+	deltaY = []
+	deltaZ = []
+	q1_v = []
+	q2_v = []
+	q3_v = []
+
 
 	force_raw = []
 	graph_f = []
@@ -67,6 +81,8 @@ class Cartesian_control:
 	er_z = []
 	graph_px = []
 	graph_py = []
+
+	T = np.zeros((4,4))
 
 	degree = 0
 	delta = 0.6 
@@ -92,7 +108,7 @@ class Cartesian_control:
 	pi = math.pi
 	l_RCC = 0.4318
 	l_tool_original = 0.4162
-	l_tool = 0.05 + l_tool_original
+	l_tool = l_tool_original + 0.02
 
 	#Kp_start = 0.000001
 	#Ki_start = 0.000001
@@ -150,7 +166,7 @@ class Cartesian_control:
 		
 		#set position of the robot in simulation through joint values		
 		psm_handle_base.set_joint_pos(0, q1_set)
-		psm_handle_pfl.set_joint_pos(0, q2_set)
+		psm_handle_ptl.set_joint_pos(2, q2_set)
 		psm_handle_pel.set_joint_pos(0, q3_set)
 
 
@@ -158,7 +174,8 @@ class Cartesian_control:
 		
 		#get the joint values of the robot from the simulation
 		q1_read = psm_handle_base.get_joint_pos(0)
-		q2_read = psm_handle_base.get_joint_pos(3)
+		q2_read = psm_handle_ptl.get_joint_pos(2)
+		#q2_read = -psm_handle_base.get_joint_pos(2)
 		q3_read = psm_handle_base.get_joint_pos(4)
 
 		return q1_read, q2_read, q3_read
@@ -192,7 +209,7 @@ class Cartesian_control:
 	def count_time(self):
 		time_end_a = time.time()
 		self.deltat_a = (time_end_a-self.time_start_a) + self.deltat_a 
-		self.time = np.append(self.time, self.deltat_a)
+		#self.time = np.append(self.time, self.deltat_a)
 
 	def count_time_ef(self):
 		time_end_a_ef = time.time()
@@ -363,8 +380,12 @@ class Cartesian_control:
 			time_vect = np.append(time_vect, time_el)
 			time_el = time_el + 1/self.f_cycle
 
-		time.sleep(0.5)
+		time.sleep(2)
 		q1_read, q2_read, q3_read = self.get_position_joints_PSM()
+
+		print("EEEEEEEEEEEEEEEIIIIIIIIII")
+		print(q1_read, q2_read, q3_read)
+		print("\n")
 		
 		x_el, y_el, z_el = self.forward_kinematics(q1_read, q2_read, q3_read)
 	
@@ -383,7 +404,7 @@ class Cartesian_control:
 		for i in range(0, self.f_cycle*self.exp_time):
 			posz_vect = np.append(posz_vect, z_el)
 			z_el = z_el + dz
-
+		
 		
 
 		return time_vect, posx_vect, posy_vect, posz_vect
@@ -392,14 +413,14 @@ class Cartesian_control:
 		
 
 
-	def compute_inverse_kinematics(self, time_vect, x_vect, y_vect, z_vect):
+	def compute_inverse_kinematics(self, x_vect, y_vect, z_vect):
 		
 		print("Processing:  IK computation ....")
 		q1_vect = []
 		q2_vect = []
 		q3_vect = []
 
-		for i in range(0, time_vect.size):
+		for i in range(0, x_vect.size):
 			q1, q2, q3 = self.inverse_kinematics(x_vect[i], y_vect[i], z_vect[i])
 			q1_vect = np.append(q1_vect, q1)
 			q2_vect = np.append(q2_vect, q2)
@@ -414,14 +435,14 @@ class Cartesian_control:
 		print("length q3:", q3_vect.size)
 		'''
 
-	def compute_forward_kinematics(self, time_vect, x_vect, y_vect, z_vect):
+	def compute_forward_kinematics(self, x_vect, y_vect, z_vect):
 		
 		print("Processing:  FK computation ....")
 		x1_vect = []
 		x2_vect = []
 		x3_vect = []
 
-		for i in range(0, time_vect.size):
+		for i in range(0, x_vect.size):
 			x1, x2, x3 = self.forward_kinematics(x_vect[i], y_vect[i], z_vect[i])
 			x1_vect = np.append(x1_vect, x1)
 			x2_vect = np.append(x2_vect, x2)
@@ -439,54 +460,210 @@ class Cartesian_control:
 
 	def reach_XY_pos_control(self, goal_x, goal_y, goal_z, start):
 
-		self.f_cycle = 10
+		self.f_cycle = 100
 		self.exp_time = 10
+		dim = self.f_cycle*self.exp_time
 
 		time_v, x_v, y_v, z_v = self.define_path(goal_x, goal_y, goal_z, start)
-		q1_v, q2_v, q3_v = self.compute_inverse_kinematics(time_v, x_v, y_v, z_v)
+		self.q1_v, self.q2_v, self.q3_v = self.compute_inverse_kinematics(x_v, y_v, z_v)
 		#self.xr_plot, self.yr_plot, self.zr_plot = self.compute_forward_kinematics(time_v, q1_v, q2_v, q3_v)
+
+		q1_r_v = np.zeros(dim)
+		q2_r_v = np.zeros(dim)
+		q3_r_v = np.zeros(dim)
+		px_v = np.zeros(dim)
+		py_v = np.zeros(dim)
+		pz_v = np.zeros(dim)
+		xfk_v = np.zeros(dim)
+		yfk_v = np.zeros(dim)
+		zfk_v = np.zeros(dim)
+		self.time = np.zeros(dim)
+		
 
 		print("Moving arm ....")
 		j=0
 		time_now = 0
-		#starttime=time.time()
+		flag = 0
+
+		count = 0
+		window = []
+		window_size = 10
+		sum = 0
+		count1 = 0
+		delta1 = 0
+
+		
 		self.time_start_a = time.time()
 		while(j<self.f_cycle*self.exp_time):
+
+
 			self.count_time()
+			self.time[j] = self.deltat_a
 			starttime=time.time()
 			self.time_start_a = time.time()
-			self.set_position_robot(q1_v[j], q2_v[j], q3_v[j])
-			j=j+1
+
+			self.set_position_robot(self.q1_v[j], self.q2_v[j], self.q3_v[j])
+			#j=j+1
 
 			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
 			xfk,yfk,zfk = self.forward_kinematics(q1_r,q2_r,q3_r)
-			self.xr_plot = np.append(self.xr_plot, xfk)
-			self.yr_plot = np.append(self.yr_plot, yfk)
-			self.zr_plot = np.append(self.zr_plot, zfk)
 			
+			########################################################
 			
-			time.sleep(1/self.f_cycle)
+			pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
+			px = pos.x
+			py = pos.y
+			pz = pos.z
+
+			px_v[j], py_v[j], pz_v[j] = self.from_AMBF2PSM_RF(px,py,pz)
 			
-			print(time.time() - self.time_start_a, 1/self.f_cycle - (time.time() - starttime))
+				
+
+			q1_r_v[j],q2_r_v[j],q3_r_v[j] = self.get_position_joints_PSM()
+			xfk_v[j],yfk_v[j],zfk_v[j] = self.forward_kinematics(q1_r_v[j],q2_r_v[j],q3_r_v[j])
+			
+
+
+			j=j+1
+			
+			wait = 1/self.f_cycle - (time.time() - self.time_start_a) 
+			if wait>0:
+				time.sleep(wait)
+			print(time.time()-self.time_start_a)
+			
+			#print(q2_r_v[j-1],py_v[j-1])#,delta)
 		
 		for i in range(0, time_v.size):
 	
 			self.xd_plot = np.append(self.xd_plot, x_v[i])
 			self.yd_plot = np.append(self.yd_plot, y_v[i])
 			self.zd_plot = np.append(self.zd_plot, z_v[i])
-			self.er_x = np.append(self.er_x, self.xd_plot[i] - self.xr_plot[i])	
-			self.er_y = np.append(self.er_y, self.yd_plot[i] - self.yr_plot[i])
-			self.er_z = np.append(self.er_z, self.zd_plot[i] - self.zr_plot[i])
 
-		
+			self.q1_r = np.append(self.q1_r, q1_r_v[i])
+			self.q2_r = np.append(self.q2_r, q2_r_v[i])
+			self.q3_r = np.append(self.q3_r, q3_r_v[i])
+			self.px = np.append(self.px, px_v[i])
+			self.py = np.append(self.py, py_v[i])
+			self.pz = np.append(self.pz, pz_v[i])
+			self.xr_plot = np.append(self.xr_plot, xfk_v[i])
+			self.yr_plot = np.append(self.yr_plot, yfk_v[i])
+			self.zr_plot = np.append(self.zr_plot, zfk_v[i])
+
+
+
+
+
+
+
+
+
 
 
 	def plot_new(self):
+
 		
 		time = []
 		time = self.time
 		time_ef = []
 		time_ef = self.time_ef
+
+		dimension = time.size
+
+		x1 = []
+		y1 = []
+		z1 = []
+
+		q1 = []
+		q2 = []
+		q3 = []
+       
+
+		q1,q2,q3 = self.compute_inverse_kinematics(self.px, self.py,self.pz)
+		x1,y1,z1 = self.compute_forward_kinematics(q1,q2,q3)
+		x_des, y_des, z_des = self.compute_forward_kinematics(self.q1_v, self.q2_v, self.q3_v)
+		#xfk,yfk,zfk = self.compute_forward_kinematics(x,y,z)
+		
+		for i in range(0,x1.size):
+			self.q1_r[i]=self.q1_r[i]*180/3.14
+			q1[i]=q1[i]*180/3.14
+			self.q2_r[i]=self.q2_r[i]*180/3.14
+			q2[i]=q2[i]*180/3.14
+			#self.q3_r[i]=self.q3_r[i]*180/3.14
+			#q3[i]=q3[i]*180/3.14
+
+			self.q1_v[i]=self.q1_v[i]*180/3.14
+			self.q2_v[i]=self.q2_v[i]*180/3.14
+			#self.q3_v[i]=self.q3_v[i]*180/3.14
+
+
+			
+		fig, axs = plt.subplots(nrows = 3)
+
+		axs[0].plot(time, self.px, color = 'r', label = " xAMBF")
+		axs[0].plot(time, self.xr_plot, color = 'b', label = "fk_(q1_sim)")
+		#axs[0].plot(time, x_des, color = 'g', label = "fk(q_des)")
+		
+		#axs[0].plot(time, self.q1_v, color = 'g', label = " q1_des")
+		#axs[0].plot(time, self.q1_r, color = 'b', label = " q1_sim")
+		#axs[0].plot(time, q1, color = 'r', label = "ik(AMBFx)")
+		
+		#axs[0].plot(time, x1, color = 'b', label = " fk(ik(xAMBF))")
+		#axs[0].set(ylabel = 'Q1 [degree]')
+		axs[0].set(ylabel = 'X [m]')	
+		axs[0].legend(loc='best')
+		axs[0].grid()
+
+		axs[1].plot(time,self.py, color = 'r', label = "yAMBF")
+		axs[1].plot(time, self.yr_plot, color = 'b', label = "fk_(q2_sim)")
+		#axs[1].plot(time, y_des, color = 'g', label = "fk(q_des)")
+		
+		#axs[1].plot(time, self.q2_v, color = 'g', label = " q2_des")
+		#axs[1].plot(time, self.q2_r, color = 'b', label = " q2_sim")
+		#axs[1].plot(time, q2, color = 'r', label = "ik(AMBFy)")
+		
+		#axs[1].plot(time, y1, color = 'b', label = " fk(ik(yAMBF))")
+		#axs[1].set(ylabel = 'Q2 [degree]')	
+		axs[1].set(ylabel = 'Y [m]')
+		axs[1].legend(loc='best')
+		axs[1].grid()
+
+		axs[2].plot(time,self.pz, color = 'r', label = "zAMBF")
+		axs[2].plot(time, self.zr_plot, color = 'b', label = "fk_(q3_sim)")
+		#axs[2].plot(time, z_des, color = 'g', label = "fk(q_des)")
+		
+		#axs[2].plot(time, self.q3_v, color = 'g', label = " q3_des")
+		#axs[2].plot(time, self.q3_r, color = 'b', label = " q3_sim")
+		#axs[2].plot(time, q3, color = 'r', label = "ik(AMBFz)")
+		
+		#axs[2].plot(time, z1, color = 'b', label = " fk(ik(zAMBF))")
+		#axs[2].set(ylabel = 'Q3 [m]')
+		axs[2].set(ylabel = 'Z [m]')	
+		axs[2].legend(loc='best')
+		axs[2].grid()
+		'''
+		#axs[2].plot(time, self.pz, color = 'r', label = "zAMBF")
+		#axs[2].plot(time, zfk, color = 'b', label = "z3")
+		#axs[2].plot(time, self.zr_plot, color = 'g', label = "zfk")
+		#axs[2].plot(time, self.q3_r, color = 'b', label = "desired")
+		axs[3].plot(time, self.deltaX[0:time.size], color = 'g', label = "x")
+		axs[3].set(ylabel = 'deltax [m]')	
+		axs[3].legend(loc='best')
+		axs[3].grid()
+		
+		#axs[3].plot(time, self.q3_r, color = 'r', label = "delta")
+		#axs[2].plot(time, zfk, color = 'b', label = "z3")
+		#axs[3].plot(time, self.zr_plot, color = 'g', label = "zfk")
+		axs[4].plot(time, self.deltaY[0:time.size], color = 'g', label = "y")
+		axs[4].set(ylabel = 'deltay [m]')	
+		axs[4].legend(loc='best')
+		axs[4].grid()
+
+		axs[5].plot(time, self.deltaZ[0:time.size], color = 'g', label = "z")
+		axs[5].set(ylabel = 'deltaz [m]')	
+		axs[5].legend(loc='best')
+		axs[5].grid()
+		'''
+		'''
 	
 		fig, axs = plt.subplots(nrows = 6)
 
@@ -523,15 +700,101 @@ class Cartesian_control:
 		axs[5].set(xlabel = 'Time [s]')	
 		axs[5].legend(loc='best')
 		axs[5].grid()
-
+		'''
 		plt.show()
 
 
 
-			
-			
+	def reach_XY_pos_control_cal(self, goal_x, goal_y, goal_z, start):
 
+		self.f_cycle = 50
+		self.exp_time = 1
+
+		time_v, x_v, y_v, z_v = self.define_path(goal_x, goal_y, goal_z,True)
+		q1_v, q2_v, q3_v = self.compute_inverse_kinematics(x_v, y_v, z_v)		
+
+		print("Moving arm for calibration ....")
+		j=0
+		time_now = 0
+		flag = 0
+
+	
+		self.time_start_a = time.time()
+
+		while(j<self.f_cycle*self.exp_time):
+
+			#self.count_time()
+			starttime=time.time()
+			self.time_start_a = time.time()
+
+			self.set_position_robot(q1_v[j], q2_v[j], q3_v[j])			
+
+			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+			xfk,yfk,zfk = self.forward_kinematics(q1_r,q2_r,q3_r)
 		
+			self.set_position_robot(q1_v[j], q2_v[j], q3_v[j])
+			
+			q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+			xfk,yfk,zfk = self.forward_kinematics(q1_r,q2_r,q3_r)
+
+			j=j+1					
+			
+			time.sleep(1/self.f_cycle)
+			
+			print(xfk,yfk,zfk)
+
+
+
+
+
+
+
+
+
+	def calibration(self):
+
+		self.reach_XY_pos_control_cal(0,0,0, True)
+		time.sleep(3)
+
+		pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
+		tx = pos.x
+		ty = pos.y
+		tz = pos.z
+
+		T = np.zeros((4,4))
+
+		T[0,0] = -1
+		T[0,1] = 0
+		T[0,2] = 0
+		T[0,3] = tx
+		T[1,0] = 0
+		T[1,1] = -1
+		T[1,2] = 0
+		T[1,3] = ty+0.007
+		T[2,0] = 0
+		T[2,1] = 0
+		T[2,2] = 1
+		T[2,3] = tz +0.004#+ 0.042 
+		T[3,0] = 0
+		T[3,1] = 0
+		T[3,2] = 0
+		T[3,3] = 1
+
+		self.T = np.linalg.inv(T) 
+		print(self.T)
+
+	
+	def from_AMBF2PSM_RF(self,x0,y0,z0):
+
+		vect0 = np.ones(4)
+		vect1 = np.ones(4)
+		vect0[0] = x0
+		vect0[1] = y0
+		vect0[2] = z0
+
+		vect1 = np.dot(self.T, vect0)
+
+		return(vect1[0], vect1[1], vect1[2])	
 
 
 
@@ -578,21 +841,45 @@ def main():
 	name_joints_base = psm_handle_base.get_joint_names()
 	print(name_joints_base)
 
+	raw_input("Name of joints of ptl")
+	name_joints_ptl = psm_handle_ptl.get_joint_names()
+	print(name_joints_ptl)
+
 	raw_input("Display movement...")
 
+
+	cart_c = Cartesian_control()
+
+
 	psm_handle_pel.set_joint_pos(0, 0)
-	psm_handle_pfl.set_joint_pos(0, 0)
+	psm_handle_ptl.set_joint_pos(2, math.radians(0))
 	psm_handle_base.set_joint_pos(0, math.radians(0))
 	time.sleep(2)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.155
+	
+	
+	cart_c.calibration()
+
+	m_start = 0.20
 	psm_handle_pel.set_joint_pos(0, m_start)
-	time.sleep(2)
+	time.sleep(8)
+	print(psm_handle_base.get_all_joint_pos())
+	q1_read, q2_read, q3_read = cart_c.get_position_joints_PSM()
+
+	print("AAAAAAAAAAAAAAAAAAAAAAIIIIIIIIIIIII")
+	print(q1_read, q2_read, q3_read)
+	print("\n")
+
 	
 
-	cart_c = Cartesian_control()
+	###################################################################
+
+	
+	
+
+	########################################################################
 	
 	print("go in 2 seconds!!!")
 	#time.sleep(2)
@@ -611,8 +898,11 @@ def main():
 	cart_c.reach_XY_pos_control(0.09, -0.07, -0.22, True)
 	cart_c.reach_XY_pos_control(0.05, -0.01, -0.18, False)
 	'''
-	cart_c.reach_XY_pos_control(0.09, 0.07, -0.22, True)
-	cart_c.reach_XY_pos_control(0.05, 0.03, -0.22, False)
+	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.226, True)#std val
+	cart_c.reach_XY_pos_control(0.05, 0.07, -0.2064, True)#std val 0.02
+	#cart_c.reach_XY_pos_control(0.02, 0.06, -0.196, False)#std val
+	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.2015, False)#std val 0.025
+	#cart_c.reach_XY_pos_control(0.02, 0.04, -0.246, False)
 	#cart_c.reach_pos_XY(-0.04, 0.06, False)
 	#cart_c.reach_pos_XY(-0.04, 0.01, False)
 	
