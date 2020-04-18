@@ -111,7 +111,34 @@ def main():
 	grad3 = rad3*180/3.14
 	print(grad3)
 
-	
+	count = 0
+	window = []
+	window_size = 10
+	sum = 0
+	count1 = 0
+
+	psm_handle_pfl.set_joint_pos(0, math.radians(0))
+
+	i = 0
+
+	while i<100000000000:
+
+		force_raw_now = psm_handle_mi.get_force()
+
+		count = count + 1
+		if count < window_size + 1:
+			window = np.append(window, force_raw_now)
+			force = force_raw_now
+		else:
+			for i in range(1, window_size):
+				window[i-1] = window[i]
+				if i == (window_size - 1):
+					window[i] = force_raw_now
+				sum = sum + window[i-1]
+			force = sum / window_size
+			sum = 0
+		print(force)
+		
 
 
 	

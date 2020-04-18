@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+from __future__ import division
 # Import the Client from ambf_client package
 from ambf_client import Client
 import time
@@ -66,6 +67,7 @@ class Cartesian_control:
 	er_z = []
 	graph_px = []
 	graph_py = []
+	abs_err = []
 
 	degree = 0
 	delta = 0.6 
@@ -312,13 +314,13 @@ class Cartesian_control:
 			force_old2 = force_old1
 			force_old1 = self.force
 
-			self.graph_f = np.append(self.graph_f, self.force)
-			self.graph_fd = np.append(self.graph_fd, self.force_const)
+			#self.graph_f = np.append(self.graph_f, self.force)
+			#self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
-			self.count_time_ef()
+			#self.count_time_ef()
 
 			
-			self.count_time()		
+			#self.count_time()		
 			self.graph_px = np.append(self.graph_px, 0)
 			self.graph_py = np.append(self.graph_py, 0)
 			PID = 1
@@ -586,11 +588,17 @@ class Cartesian_control:
 
 
 	def plot_sin(self):
+
 		print("plot...")
 		time = []
 		time = self.time
 		time_ef = []
 		time_ef = self.time_ef
+
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/01_sp_sin_time.csv', time, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/01_sp_sin_force.csv', self.graph_f, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/01_sp_sin_forced.csv', self.graph_fd, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/01_sp_sin_error.csv', self.abs_err, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 2)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -600,7 +608,7 @@ class Cartesian_control:
 		axs[0].legend(loc='best')
 		axs[0].grid()
 	
-		axs[1].plot(time, self.error_force, color = 'r', label = "error")
+		axs[1].plot(time, self.abs_err, color = 'r', label = "error")
 		axs[1].set(xlabel = 'Time [s]', ylabel = 'Force_error_norm')
 		axs[1].legend(loc='best')
 		axs[1].grid()
@@ -617,13 +625,14 @@ class Cartesian_control:
 		sum = 0
 		count1 = 0
 		
-		step = 8
+		step = 0.697
 		times = 0
 		angle = 0
 
-		self.f_cycle = 50
-		self.exp_time = 60
+		self.f_cycle = 60
+		self.exp_time = 8.6*2
 		dim = self.f_cycle*self.exp_time
+		dim = int(dim)
 
 		self.graph_f_cycle = np.zeros(dim)
 		self.graph_fd_cycle = np.zeros(dim)
@@ -631,6 +640,7 @@ class Cartesian_control:
 		
 		xfk = np.zeros(dim)
 		yfk = np.zeros(dim)
+		e_a = np.zeros(dim)
 		#zfk = np.zeros(dim)
 
 		#print(zfk[0])
@@ -657,8 +667,13 @@ class Cartesian_control:
 
 
 		
-		Kps = 0.001 #good for step = 5
+		Kps = 0.004 #good for step = 5
+		Kis = 0.0004
+
+		'''
+		Kps = 0.003 #good for step = 5
 		Kis = 0.0003
+		'''
 
 		print("STARTING SINUSOID IN 2 SECONDS")
 		#time.sleep(2)
@@ -689,6 +704,7 @@ class Cartesian_control:
 
 			error = force_target[j] - self.force
 			e_rel = error/force_target[j]
+			e_a[j] = abs(error)
 			self.P_value = (Kps * error)
 		
 			self.Integrator = self.Integrator + error
@@ -709,10 +725,16 @@ class Cartesian_control:
 			self.graph_f_cycle[j] = self.force
 			self.graph_fd_cycle[j] = force_target[j]
 			self.error_force_cycle[j] = e_rel
-			print(j)
+			
 			j=j+1
+			if j>dim-1:
+				break
 
-			time.sleep(1/self.f_cycle)
+			wait = 1/self.f_cycle - (time.time() - starttime) 
+			if wait>0:
+				time.sleep(wait)
+
+			print(time.time() - starttime,   j)
 			#print(time.time()-starttime)
 
 
@@ -720,7 +742,8 @@ class Cartesian_control:
 
 			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
 			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
-			self.error_force = np.append(self.error_force, self.error_force_cycle[i])	
+			self.error_force = np.append(self.error_force, self.error_force_cycle[i])
+			self.abs_err = np.append(self.abs_err, e_a[i])	
 
 
 

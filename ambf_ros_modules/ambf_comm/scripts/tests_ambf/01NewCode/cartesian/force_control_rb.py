@@ -100,7 +100,7 @@ class Cartesian_control:
 	pi = math.pi
 	l_RCC = 0.4318
 	l_tool_original = 0.4162
-	l_tool = l_tool_original + 0.05
+	l_tool = l_tool_original + 0.02
 
 	T = np.zeros((4,4))
 
@@ -109,7 +109,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 4-amplitude
+	force_const = 2.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -271,7 +271,7 @@ class Cartesian_control:
 		time2 = self.time_ef
 
 		#fdim = 12
-		fig, axs = plt.subplots(nrows = 5, sharex=True)
+		fig, axs = plt.subplots(nrows = 4, sharex=True)
 		fig.subplots_adjust(hspace=0.25)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -300,13 +300,14 @@ class Cartesian_control:
 		axs[2].grid()
 
 		axs[3].plot(time, self.graph_pz, color = 'g', label = "posz" )
+		axs[3].plot(time, self.pz, color = 'r', label = "AMBF")
 		axs[3].set(ylabel = 'pos_z [cm]')
 		#axs[1].set(xlabel = 'Time [s]')	
 		#axs[1].set_xticklabels([],rotation=0, fontsize=1)
 		#axs[1].tick_params(labelsize=fdim)	
 		axs[3].legend(loc='best', fontsize = 'small')
 		axs[3].grid()
-
+		'''
 		axs[4].plot(time, self.er_z, color = 'g', label = "err_posz")
 		axs[4].set(ylabel = 'Z_er [mm]')
 		axs[4].set(xlabel = 'Time [s]')	
@@ -315,7 +316,7 @@ class Cartesian_control:
 		axs[4].set(xlabel = 'Time [s]')
 		axs[4].legend(loc='3', fontsize = 'small')
 		axs[4].grid()
-
+		'''
 	
 		plt.show()
 
@@ -380,7 +381,9 @@ class Cartesian_control:
 	#if the force read is lower than the target force, it is decreased of the same amount if the force read is higher than the target
 	#force. Once the target force is reached, if the force read remains within a bandwidth for a specified number of iteration, exit the loop.
 
+	
 	def approach_goal_Z(self, m_start):
+		f = 50
 		self.m = m_start
 		force_old2 = 0
 		force_old1 = 0
@@ -407,7 +410,7 @@ class Cartesian_control:
 
 			if (self.force < (self.force_const + self.band)) and (self.force > (self.force_const - self.band)):
 				self.count_mi_loop = self.count_mi_loop + 1
-			if self.count_mi_loop == 50:
+			if self.count_mi_loop == 5:
 				self.count_mi_loop = 0
 				break
 			
@@ -424,7 +427,7 @@ class Cartesian_control:
 			self.count_time()		
 			self.graph_px = np.append(self.graph_px, 0)
 			self.graph_py = np.append(self.graph_py, 0)
-			self.graph_pz = np.append(self.graph_pz, -0.20)
+			self.graph_pz = np.append(self.graph_pz, -0.23)
 			PID = 1
 
 			self.graph_frn = np.append(self.graph_frn, force_raw_now)
@@ -433,7 +436,7 @@ class Cartesian_control:
 
 			self.px = np.append(self.px, 0)
 			self.py = np.append(self.py, 0)
-			self.pz = np.append(self.pz, -0.20)
+			self.pz = np.append(self.pz, -0.23)
 			self.q1_r = np.append(self.q1_r, 0)
 			self.q2_r = np.append(self.q2_r, 0)
 			self.q3_r = np.append(self.q3_r, 0)
@@ -459,6 +462,10 @@ class Cartesian_control:
 			ez = 0
 			#self.er_z = np.append(self.er_z, ez)
 			self.error_abs = np.append(self.error_abs, 0)
+
+			wait = 1/f - (time.time() - self.time_start_a) 
+			if wait>0:
+				time.sleep(wait)
 
 	#Cartesian control is applied here, reaching an (x,y) position trying to keep constant the force in z direction. 
 	#Initially, a start boolean is specified: if it is True, it means that is the first time this function is called. So, out of the internal 
@@ -603,25 +610,14 @@ class Cartesian_control:
 			q1_r,q2_r,q3_r[j] = self.get_position_joints_PSM()
 			xfk[j],yfk[j],zfk[j] = self.forward_kinematics(q1_r,q2_r,q3_r[j])
 			
-			########################################################
-			'''
-			if flag==0:
-				self.delta_XYZ()
-				flag=1
-
-			pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
-			px[j] = -pos.x + self.deltaX
-			py[j] = -pos.y + self.deltaY
-			pz[j] = pos.z + self.deltaZ
-
-			'''
+			#################################################################
 			pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
 			px = pos.x
 			py = pos.y
 			pz = pos.z
 
 			px_v[j], py_v[j], pz_v[j] = self.from_AMBF2PSM_RF(px,py,pz)
-			########################################################
+			#################################################################
 
 			force_raw_now = psm_handle_mi.get_force()
 
@@ -648,14 +644,11 @@ class Cartesian_control:
 				
 			PID = self.P_value + self.I_value
 			zd = zfk[j] + PID*zfk[j]
-			#zd = pz[j] + PID*pz[j]
-			
 
 			z_v[j] = zd
 
 			q1,q2,q3 = self.inverse_kinematics(x_v[j],y_v[j], z_v[j])
-			#q1,q2,q3 = self.inverse_kinematics(px[j],py[j], z_v[j])
-			
+		
 			
 			self.set_position_robot(q1,q2,q3)
 
@@ -703,41 +696,7 @@ class Cartesian_control:
 			self.error_abs = np.append(self.error_abs, er_a[i])
 
 
-	def delta_XYZ(self):
-
-		time.sleep(1)
-		pos = psm_handle_trl.get_pos() #AMBF function
-		px = -pos.x
-		py = -pos.y
-		pz = pos.z
-		q1, q2, q3 = self.get_position_joints_PSM()
-		xfk, yfk, zfk, = self.forward_kinematics(q1,q2,q3)
-
-
-		self.deltaX = abs(px-xfk)
-		self.deltaY = abs(py-yfk)
-		self.deltaZ = abs(pz-zfk)
-
 	
-
-		if px>xfk:
-			self.deltaX = -self.deltaX
-		if px<xfk:
-			self.deltaX = +self.deltaX
-
-		if py>yfk:
-			self.deltaY = -self.deltaY
-		if py<yfk:
-			self.deltaY = +self.deltaY
-
-
-		if pz>zfk:
-			self.deltaZ = -self.deltaZ
-		if pz<zfk:
-			self.deltaZ = self.deltaZ
-
-		print(self.deltaX, self.deltaY, self.deltaZ)
-		print("\n")
 
 	def plot_new0(self):
 
@@ -877,7 +836,7 @@ class Cartesian_control:
 	def reach_XY_pos_control_cal(self, goal_x, goal_y, goal_z, start):
 
 		self.f_cycle = 50
-		self.exp_time = 1
+		self.exp_time = 0.5
 
 		x_v, y_v, z_v = self.define_path_cal(goal_x, goal_y, goal_z,True)
 		q1_v, q2_v, q3_v = self.compute_inverse_kinematics(x_v, y_v, z_v)		
@@ -912,9 +871,16 @@ class Cartesian_control:
 			
 			print(xfk,yfk,zfk)
 
+		return xfk, yfk, zfk
 
 
+	def get_cart_pos_cal(self):
 
+		q1_r,q2_r,q3_r = self.get_position_joints_PSM()
+		xfk,yfk,zfk = self.forward_kinematics(q1_r,q2_r,q3_r)
+		
+
+		return xfk, yfk, zfk
 
 
 
@@ -922,7 +888,8 @@ class Cartesian_control:
 
 	def calibration(self):
 
-		self.reach_XY_pos_control_cal(0,0,0, True)
+		#xcal, ycal, zcal = self.reach_XY_pos_control_cal(0,0,0, True)
+		xcal, ycal, zcal = self.get_cart_pos_cal()
 		time.sleep(3)
 
 		pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
@@ -935,15 +902,15 @@ class Cartesian_control:
 		T[0,0] = -1
 		T[0,1] = 0
 		T[0,2] = 0
-		T[0,3] = tx
+		T[0,3] = tx - xcal
 		T[1,0] = 0
 		T[1,1] = -1
 		T[1,2] = 0
-		T[1,3] = ty+0.007
+		T[1,3] = ty - ycal
 		T[2,0] = 0
 		T[2,1] = 0
 		T[2,2] = 1
-		T[2,3] = tz + 0.035 - 0.0235
+		T[2,3] = tz - zcal
 		T[3,0] = 0
 		T[3,1] = 0
 		T[3,2] = 0
@@ -951,6 +918,8 @@ class Cartesian_control:
 
 		self.T = np.linalg.inv(T) 
 		print(self.T)
+		print("CALIBRATED!!!")
+
 
 	
 	def from_AMBF2PSM_RF(self,x0,y0,z0):
@@ -1015,10 +984,10 @@ def main():
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
 
-	cart_c.calibration()
+	#cart_c.calibration()
 
 	psm_handle_pel.set_joint_pos(0, 0)
-	m_start = 0.12#0.155
+	m_start = 0.17#0.155
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
 	
@@ -1038,6 +1007,7 @@ def main():
 	
 	
 	cart_c.approach_goal_Z(m_start)
+	cart_c.calibration()
 	'''
 	cart_c.reach_XY_force_control(0.09, 0.05)
 	cart_c.reach_XY_force_control(0.05, -0.02)
@@ -1052,10 +1022,12 @@ def main():
 	#cart_c.reach_XY_force_control(0.01,-0.08)
 
 	cart_c.reach_XY_force_control(0.01, 0.1)
-	cart_c.reach_XY_force_control(0.05,-0.05)
+	cart_c.reach_XY_force_control(0.1,-0.02)
+	#cart_c.reach_XY_force_control(0.01, 0.1)
+	#cart_c.reach_XY_force_control(0.1,-0.02)
 
 
-	cart_c.plot_new0()
+	#cart_c.plot_new0()
 	
 	
 
@@ -1063,7 +1035,7 @@ def main():
 	print('STEP1')	
 	#cart_c.plot_new()
 
-	#cart_c.plot_complete()
+	cart_c.plot_complete()
 	#cart_c.plot_complete1()
 
 

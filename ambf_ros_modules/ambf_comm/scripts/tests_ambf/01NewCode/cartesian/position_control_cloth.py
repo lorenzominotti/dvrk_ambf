@@ -599,45 +599,45 @@ class Cartesian_control:
 			
 		fig, axs = plt.subplots(nrows = 3)
 
-		axs[0].plot(time, self.px, color = 'r', label = " xAMBF")
-		axs[0].plot(time, self.xr_plot, color = 'b', label = "fk_(q1_sim)")
+		#axs[0].plot(time, self.px, color = 'r', label = " xAMBF")
+		#axs[0].plot(time, self.xr_plot, color = 'b', label = "fk_(q1_sim)")
 		#axs[0].plot(time, x_des, color = 'g', label = "fk(q_des)")
 		
-		#axs[0].plot(time, self.q1_v, color = 'g', label = " q1_des")
-		#axs[0].plot(time, self.q1_r, color = 'b', label = " q1_sim")
-		#axs[0].plot(time, q1, color = 'r', label = "ik(AMBFx)")
+		axs[0].plot(time, self.q1_v, color = 'g', label = " q1_des")
+		axs[0].plot(time, self.q1_r, color = 'b', label = " q1_sim")
+		axs[0].plot(time, q1, color = 'r', label = "ik(AMBFx)")
 		
 		#axs[0].plot(time, x1, color = 'b', label = " fk(ik(xAMBF))")
-		#axs[0].set(ylabel = 'Q1 [degree]')
-		axs[0].set(ylabel = 'X [m]')	
+		axs[0].set(ylabel = 'Q1 [degree]')
+		#axs[0].set(ylabel = 'X [m]')	
 		axs[0].legend(loc='best')
 		axs[0].grid()
 
-		axs[1].plot(time,self.py, color = 'r', label = "yAMBF")
-		axs[1].plot(time, self.yr_plot, color = 'b', label = "fk_(q2_sim)")
+		#axs[1].plot(time,self.py, color = 'r', label = "yAMBF")
+		#axs[1].plot(time, self.yr_plot, color = 'b', label = "fk_(q2_sim)")
 		#axs[1].plot(time, y_des, color = 'g', label = "fk(q_des)")
 		
-		#axs[1].plot(time, self.q2_v, color = 'g', label = " q2_des")
-		#axs[1].plot(time, self.q2_r, color = 'b', label = " q2_sim")
-		#axs[1].plot(time, q2, color = 'r', label = "ik(AMBFy)")
+		axs[1].plot(time, self.q2_v, color = 'g', label = " q2_des")
+		axs[1].plot(time, self.q2_r, color = 'b', label = " q2_sim")
+		axs[1].plot(time, q2, color = 'r', label = "ik(AMBFy)")
 		
 		#axs[1].plot(time, y1, color = 'b', label = " fk(ik(yAMBF))")
-		#axs[1].set(ylabel = 'Q2 [degree]')	
-		axs[1].set(ylabel = 'Y [m]')
+		axs[1].set(ylabel = 'Q2 [degree]')	
+		#axs[1].set(ylabel = 'Y [m]')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
-		axs[2].plot(time,self.pz, color = 'r', label = "zAMBF")
-		axs[2].plot(time, self.zr_plot, color = 'b', label = "fk_(q3_sim)")
+		#axs[2].plot(time,self.pz, color = 'r', label = "zAMBF")
+		#axs[2].plot(time, self.zr_plot, color = 'b', label = "fk_(q3_sim)")
 		#axs[2].plot(time, z_des, color = 'g', label = "fk(q_des)")
 		
-		#axs[2].plot(time, self.q3_v, color = 'g', label = " q3_des")
-		#axs[2].plot(time, self.q3_r, color = 'b', label = " q3_sim")
-		#axs[2].plot(time, q3, color = 'r', label = "ik(AMBFz)")
+		axs[2].plot(time, self.q3_v, color = 'g', label = " q3_des")
+		axs[2].plot(time, self.q3_r, color = 'b', label = " q3_sim")
+		axs[2].plot(time, q3, color = 'r', label = "ik(AMBFz)")
 		
 		#axs[2].plot(time, z1, color = 'b', label = " fk(ik(zAMBF))")
-		#axs[2].set(ylabel = 'Q3 [m]')
-		axs[2].set(ylabel = 'Z [m]')	
+		axs[2].set(ylabel = 'Q3 [m]')
+		#axs[2].set(ylabel = 'Z [m]')	
 		axs[2].legend(loc='best')
 		axs[2].grid()
 		'''
@@ -743,7 +743,7 @@ class Cartesian_control:
 			
 			print(xfk,yfk,zfk)
 
-
+		return xfk, yfk, zfk
 
 
 
@@ -753,7 +753,7 @@ class Cartesian_control:
 
 	def calibration(self):
 
-		self.reach_XY_pos_control_cal(0,0,0, True)
+		xcal, ycal, zcal = self.reach_XY_pos_control_cal(0,0,0, True)
 		time.sleep(3)
 
 		pos = psm_handle_trl.get_pos()  #if I want Z from AMBF function
@@ -766,15 +766,15 @@ class Cartesian_control:
 		T[0,0] = -1
 		T[0,1] = 0
 		T[0,2] = 0
-		T[0,3] = tx
+		T[0,3] = tx - xcal
 		T[1,0] = 0
 		T[1,1] = -1
 		T[1,2] = 0
-		T[1,3] = ty+0.007
+		T[1,3] = ty - ycal
 		T[2,0] = 0
 		T[2,1] = 0
 		T[2,2] = 1
-		T[2,3] = tz +0.004#+ 0.042 
+		T[2,3] = tz - zcal
 		T[3,0] = 0
 		T[3,1] = 0
 		T[3,2] = 0
@@ -899,7 +899,7 @@ def main():
 	cart_c.reach_XY_pos_control(0.05, -0.01, -0.18, False)
 	'''
 	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.226, True)#std val
-	cart_c.reach_XY_pos_control(0.05, 0.07, -0.2064, True)#std val 0.02
+	cart_c.reach_XY_pos_control(0.05, 0.07, -0.2065, True)#std val 0.02
 	#cart_c.reach_XY_pos_control(0.02, 0.06, -0.196, False)#std val
 	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.2015, False)#std val 0.025
 	#cart_c.reach_XY_pos_control(0.02, 0.04, -0.246, False)

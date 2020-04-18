@@ -55,6 +55,7 @@ class Cartesian_control:
 	yr_plot = []
 	zr_plot = []
 	time_plot = []
+	abs_err = []
 
 	force_raw = []
 	graph_f = []
@@ -100,7 +101,7 @@ class Cartesian_control:
 
 	amplitude = 0.5
 
-	force_const = 1.5-amplitude
+	force_const = 2.5-amplitude
 
 	deltat_a = 0
 	time = []
@@ -321,13 +322,13 @@ class Cartesian_control:
 			force_old2 = force_old1
 			force_old1 = self.force
 
-			self.graph_f = np.append(self.graph_f, self.force)
-			self.graph_fd = np.append(self.graph_fd, self.force_const)
+			#self.graph_f = np.append(self.graph_f, self.force)
+			#self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
 			#self.count_time_ef()
 
 			
-			self.count_time()		
+			#self.count_time()		
 			self.graph_px = np.append(self.graph_px, 0)
 			self.graph_py = np.append(self.graph_py, 0)
 			PID = 1
@@ -596,15 +597,17 @@ class Cartesian_control:
 
 
 	def plot_sin(self):
+
+		print("plot...")
 		time = []
 		time = self.time
 		time_ef = []
-		time2 = self.time_ef
+		time_ef = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_sin_plots/05_cloth_sin_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_sin_plots/05_cloth_sin_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_sin_plots/05_cloth_sin_error.csv', self.error_force2, delimiter=",") 
-
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_time.csv', time, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_force.csv', self.graph_f, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_forced.csv', self.graph_fd, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_error.csv', self.abs_err, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 2)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -614,12 +617,13 @@ class Cartesian_control:
 		axs[0].legend(loc='best')
 		axs[0].grid()
 	
-		axs[1].plot(time, self.error_force, color = 'r', label = "error")
+		axs[1].plot(time, self.abs_err, color = 'r', label = "error")
 		axs[1].set(xlabel = 'Time [s]', ylabel = 'Force_error_norm')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
 		plt.show()
+
 
 
 
@@ -632,13 +636,14 @@ class Cartesian_control:
 		sum = 0
 		count1 = 0
 		
-		step = 7.2
+		step = 6.97
 		times = 0
 		angle = 0
 
-		self.f_cycle = 50
-		self.exp_time = 30
+		self.f_cycle = 60
+		self.exp_time = 0.86*20
 		dim = self.f_cycle*self.exp_time
+		dim = int(dim)
 
 		t_cycle = 1/self.f_cycle
 		print(t_cycle)
@@ -649,6 +654,8 @@ class Cartesian_control:
 		
 		xfk = np.zeros(dim)
 		yfk = np.zeros(dim)
+		e_a = np.zeros(dim)
+		
 		#zfk = np.zeros(dim)
 
 		#print(zfk[0])
@@ -674,9 +681,14 @@ class Cartesian_control:
 		x_fk,y_fk,z_fk = self.forward_kinematics(q1_r,q2_r,q3_r)
 
 
-		
+		'''
 		Kps = 0.01 #good for step = 5
-		Kis = 0.00008
+		Kis = 0.0008
+		'''
+
+		Kps = 0.008 #good for step = 5
+		Kis = 0.0008
+
 
 		print("STARTING SINUSOID IN 2 SECONDS")
 		#time.sleep(2)
@@ -707,6 +719,7 @@ class Cartesian_control:
 
 			error = force_target[j] - self.force
 			e_rel = error/force_target[j]
+			e_a[j] = abs(error)
 			self.P_value = (Kps * error)
 		
 			self.Integrator = self.Integrator + error
@@ -727,14 +740,17 @@ class Cartesian_control:
 			self.graph_f_cycle[j] = self.force
 			self.graph_fd_cycle[j] = force_target[j]
 			self.error_force_cycle[j] = e_rel
-			print(j)
+			
 			j=j+1
-			wait = t_cycle-(time.time()-starttime)
-			#time.sleep(1/self.f_cycle)
-			if (wait)>0:
+			if j>dim-1:
+				break
+
+			wait = 1/self.f_cycle - (time.time() - starttime) 
+			if wait>0:
 				time.sleep(wait)
-			print((time.time()-starttime))
-			#time.sleep(self.f_cycle-(time.time()-starttime))
+
+			print(time.time() - starttime,   j)
+			#print(time.time()-starttime)
 
 
 		for i in range (0,dim):
@@ -742,9 +758,7 @@ class Cartesian_control:
 			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
 			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
 			self.error_force = np.append(self.error_force, self.error_force_cycle[i])
-			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
-			self.graph_fd2 = np.append(self.graph_fd2, self.graph_fd_cycle[i])
-			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
+			self.abs_err = np.append(self.abs_err, e_a[i])
 
 
 

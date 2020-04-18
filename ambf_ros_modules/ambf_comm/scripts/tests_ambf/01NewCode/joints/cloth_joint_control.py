@@ -42,6 +42,10 @@ psm_handle_trl = _client.get_obj_handle('psm/toolrolllink')
 
 class Joint_control:
 	
+	#matplotlib.rc('font', **font)
+	error_force2 = []
+	graph_f2 = []
+
 	force_raw = []
 	graph_f = []
 	graph_m = []
@@ -57,13 +61,10 @@ class Joint_control:
 	er_y = []
 	er_z = []
 
-	error_force2 = []
-	graph_f2 = []
-
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.0001
+	delta_m_start = 0.0002
 	band = 0.03
 	band2 = 0.5
 	limit_mi = 0.30
@@ -79,7 +80,7 @@ class Joint_control:
 	graph_fd = []
 	q1_plot = []
 	q2_plot = []
-	abs_error = []
+	error_abs = []
 	posX = 0
 	posY = 0
 	posZ = 0
@@ -88,12 +89,14 @@ class Joint_control:
 	l_tool_original = 0.4162
 	l_tool = 0.05 + l_tool_original
 
-	Kp_start = 0.000001
+	Kp_start = 0.00001
 	Ki_start = 0.000001
 
 	amplitude = 0.5
 
 	force_const = 2.5-amplitude
+
+	q3_plot = []
 
 	deltat_a = 0
 	time = []
@@ -105,16 +108,11 @@ class Joint_control:
 	time_now = 0
 
 	flag_first_pos = True
+	
 
-	'''
-	Kp = 0.01 #stiffer
-	Ki = 0.00005
-	#Kd = 0.00008
-	'''
 
-	Kp = 0.0065 #stiffer
-	Ki = 0.00005
-
+	Kp = 0.0035 #stiffer
+	Ki = 0.00008
 
 	Integrator = 0
 	Derivator = 0
@@ -182,7 +180,7 @@ class Joint_control:
 			self.graph_f = np.append(self.graph_f, self.force)
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.error_force = np.append(self.error_force, 0)
-			self.abs_error = np.append(self.abs_error, 0)
+			self.error_abs = np.append(self.error_abs, 0)
 			#self.count_time_ef()
 			PID = 1
 			self.graph_m = np.append(self.graph_m, self.m)
@@ -192,6 +190,7 @@ class Joint_control:
 			q2 = q2*180/3.14
 			self.q1_plot = np.append(self.q1_plot, q1)
 			self.q2_plot = np.append(self.q2_plot, q2)
+			self.q3_plot = np.append(self.q3_plot, 0.214)
 			self.count_time()
 
 
@@ -326,14 +325,15 @@ class Joint_control:
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.graph_f2 = np.append(self.graph_f2, self.force)
 			self.error_force2 = np.append(self.error_force2, e_rel)
+			self.error_abs = np.append(self.error_abs, abs(error))
 			self.count_time()
-			self.abs_error = np.append(self.abs_error, error)
 			self.error_force = np.append(self.error_force, e_rel)
-			q1,q2,_= self.get_position_joints_PSM()
+			q1,q2,q3= self.get_position_joints_PSM()
 			q1 = q1*180/3.14
 			q2 = q2*180/3.14
 			self.q1_plot = np.append(self.q1_plot, q1)
 			self.q2_plot = np.append(self.q2_plot, q2)
+			self.q3_plot = np.append(self.q3_plot, q3)
 			self.count_time_ef()
 
 			pos = psm_handle_trl.get_pos()
@@ -358,13 +358,12 @@ class Joint_control:
 		time_ef = []
 		time2 = self.time_ef
 
-		
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_time.csv', time2, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_force.csv', self.graph_f2, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_error.csv', self.abs_error, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_fd.csv', self.graph_fd, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_q1.csv', self.q1_plot, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_q2.csv', self.q2_plot, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_time.csv', time2, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_force.csv', self.graph_f2, delimiter=",") 
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_error.csv', self.error_abs, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_fd.csv', self.graph_fd, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_q1.csv', self.q1_plot, delimiter=",") 
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_cloth_joint_q2.csv', self.q2_plot, delimiter=",")
 
 		font = {'family' : 'normal',
        		#'weight' : 'normal',
@@ -373,7 +372,7 @@ class Joint_control:
 		matplotlib.rc('font', **font)
 	
 		#fdim = 12
-		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig, axs = plt.subplots(nrows = 4, sharex=True)
 		fig.subplots_adjust(hspace=0.25)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -383,22 +382,27 @@ class Joint_control:
 		axs[0].set_title('CLOTH', fontsize=26)
 		axs[0].grid()
 
-		axs[1].plot(time, self.abs_error, color = 'r', label = "abs_error")
+		axs[1].plot(time, self.error_abs, color = 'r', label = "abs_error")
 		axs[1].set(ylabel = 'Abs_F_err [N]')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
 		axs[2].plot(time, self.q1_plot, label = "joint 1")
 		axs[2].plot(time, self.q2_plot, label = "joint 2")
-		axs[2].set(xlabel = 'Time [s]', ylabel = 'Joints values [deg]')
+		axs[2].set(ylabel = 'Joints1_2 [deg]')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
+		axs[3].plot(time, self.q3_plot, color = 'g', label = "joint 3")
+		axs[3].set(xlabel = 'Time [s]', ylabel = 'Joint3 [m]')
+		axs[3].legend(loc='best')
+		axs[3].grid()
+
 		plt.show()
 
-
-
+		
 		'''
+
 		fig, axs = plt.subplots(nrows = 3)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
@@ -418,6 +422,7 @@ class Joint_control:
 		axs[2].legend(loc='best')
 		axs[2].grid()
 		plt.show()
+
 		'''
 
 def main():
@@ -462,7 +467,7 @@ def main():
 	#time.sleep(1)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
-	m_start = 0.16
+	m_start = 0.15
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(1)
 	print(psm_handle_trl.get_pos())
@@ -473,9 +478,9 @@ def main():
 	
 	joint_c = Joint_control()
 	joint_c.approach_goal_Z(m_start)
-	joint_c.reach_XY_force_control(-0.09, -0.05, True)
-	joint_c.reach_XY_force_control(-0.05, 0.02, False)
-	joint_c.reach_XY_force_control(-0.01, -0.10, False)
+	joint_c.reach_XY_force_control(-0.01, -0.07, True)
+	joint_c.reach_XY_force_control(-0.07, 0.02, False)
+	#joint_c.reach_XY_force_control(-0.01, -0.10, False)
 	joint_c.plots()
 
 	'''
@@ -500,6 +505,6 @@ if __name__ == "__main__":
     main()
 
 
-
-
+		
+	
 

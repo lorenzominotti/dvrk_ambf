@@ -89,12 +89,14 @@ class Joint_control:
 	l_tool_original = 0.4162
 	l_tool = 0.05 + l_tool_original
 
-	Kp_start = 0.000001
+	Kp_start = 0.00001
 	Ki_start = 0.000001
 
 	amplitude = 0.5
 
 	force_const = 2.5-amplitude
+
+	q3_plot = []
 
 	deltat_a = 0
 	time = []
@@ -110,10 +112,10 @@ class Joint_control:
 	#Kp = 0.006 #rqt_plot
 	#Ki = 0.000035
 	'''
-	Kp = 0.004 #good
+	Kp = 0.002 #good
 	Ki = 0.00005
 	'''
-	Kp = 0.003 #rqt_plot
+	Kp = 0.002 #rqt_plot
 	Ki = 0.00005
 
 	Integrator = 0
@@ -192,6 +194,7 @@ class Joint_control:
 			q2 = q2*180/3.14
 			self.q1_plot = np.append(self.q1_plot, q1)
 			self.q2_plot = np.append(self.q2_plot, q2)
+			self.q3_plot = np.append(self.q3_plot, 0.2)
 			self.count_time()
 
 
@@ -326,14 +329,15 @@ class Joint_control:
 			self.graph_fd = np.append(self.graph_fd, self.force_const)
 			self.graph_f2 = np.append(self.graph_f2, self.force)
 			self.error_force2 = np.append(self.error_force2, e_rel)
-			self.error_abs = np.append(self.error_abs, error)
+			self.error_abs = np.append(self.error_abs, abs(error))
 			self.count_time()
 			self.error_force = np.append(self.error_force, e_rel)
-			q1,q2,_= self.get_position_joints_PSM()
+			q1,q2,q3= self.get_position_joints_PSM()
 			q1 = q1*180/3.14
 			q2 = q2*180/3.14
 			self.q1_plot = np.append(self.q1_plot, q1)
 			self.q2_plot = np.append(self.q2_plot, q2)
+			self.q3_plot = np.append(self.q3_plot, q3)
 			self.count_time_ef()
 
 			pos = psm_handle_trl.get_pos()
@@ -372,14 +376,14 @@ class Joint_control:
 		matplotlib.rc('font', **font)
 	
 		#fdim = 12
-		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig, axs = plt.subplots(nrows = 4, sharex=True)
 		fig.subplots_adjust(hspace=0.25)
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
 		axs[0].set(ylabel = 'Force [N]')	
 		axs[0].legend(loc='best')
-		axs[0].set_title('RIGID BODY', fontsize=26)
+		axs[0].set_title('RIGID BODY', fontsize=24)
 		axs[0].grid()
 
 		axs[1].plot(time, self.error_abs, color = 'r', label = "abs_error")
@@ -389,9 +393,14 @@ class Joint_control:
 
 		axs[2].plot(time, self.q1_plot, label = "joint 1")
 		axs[2].plot(time, self.q2_plot, label = "joint 2")
-		axs[2].set(xlabel = 'Time [s]', ylabel = 'Joints values [deg]')
+		axs[2].set(ylabel = 'Joints1_2 [deg]')
 		axs[2].legend(loc='best')
 		axs[2].grid()
+
+		axs[3].plot(time, self.q3_plot, color = 'g', label = "joint 3")
+		axs[3].set(xlabel = 'Time [s]', ylabel = 'Joint3 [m]')
+		axs[3].legend(loc='best')
+		axs[3].grid()
 
 		plt.show()
 
@@ -473,9 +482,9 @@ def main():
 	
 	joint_c = Joint_control()
 	joint_c.approach_goal_Z(m_start)
-	joint_c.reach_XY_force_control(-0.09, -0.05, True)
-	joint_c.reach_XY_force_control(-0.05, 0.02, False)
-	joint_c.reach_XY_force_control(-0.01, -0.10, False)
+	joint_c.reach_XY_force_control(-0.01, -0.07, True)
+	joint_c.reach_XY_force_control(-0.07, 0.02, False)
+	#joint_c.reach_XY_force_control(-0.01, -0.10, False)
 	joint_c.plots()
 
 	'''
