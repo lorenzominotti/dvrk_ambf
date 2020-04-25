@@ -68,7 +68,7 @@ time.sleep(1)
 #psm_handle_pel.set_joint_pos(0, 0.1)
 #time.sleep(1)
 psm_handle_pel.set_joint_pos(0, 0)
-m = 0.12
+m = 0.19
 psm_handle_pel.set_joint_pos(0, m)
 #psm_handle_pel.set_joint_pos(0, math.radians(40))
 #time.sleep(1)

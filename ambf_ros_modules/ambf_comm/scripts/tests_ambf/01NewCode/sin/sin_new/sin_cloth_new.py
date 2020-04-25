@@ -604,10 +604,10 @@ class Cartesian_control:
 		time_ef = []
 		time_ef = self.time_ef
 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_time.csv', time, delimiter=",")
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_force.csv', self.graph_f, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_forced.csv', self.graph_fd, delimiter=",") 
-		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/03_cl_sin_error.csv', self.abs_err, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/04_cl_sin_time.csv', time, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/04_cl_sin_force.csv', self.graph_f, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/04_cl_sin_forced.csv', self.graph_fd, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/test_sin/04_cl_sin_error.csv', self.abs_err, delimiter=",")
 
 		fig, axs = plt.subplots(nrows = 2)
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
@@ -636,12 +636,12 @@ class Cartesian_control:
 		sum = 0
 		count1 = 0
 		
-		step = 6.97
+		step = 34.622
 		times = 0
-		angle = 0
+		angle = -34.622
 
 		self.f_cycle = 60
-		self.exp_time = 0.86*20
+		self.exp_time = 17.3
 		dim = self.f_cycle*self.exp_time
 		dim = int(dim)
 
@@ -681,14 +681,14 @@ class Cartesian_control:
 		x_fk,y_fk,z_fk = self.forward_kinematics(q1_r,q2_r,q3_r)
 
 
-		'''
-		Kps = 0.01 #good for step = 5
-		Kis = 0.0008
+		
+		Kps = 0.007 #good for step = 5
+		Kis = 0.0006
 		'''
 
 		Kps = 0.008 #good for step = 5
 		Kis = 0.0008
-
+		'''
 
 		print("STARTING SINUSOID IN 2 SECONDS")
 		#time.sleep(2)

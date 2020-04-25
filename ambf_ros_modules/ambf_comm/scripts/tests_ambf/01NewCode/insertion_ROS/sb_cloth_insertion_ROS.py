@@ -84,6 +84,7 @@ force_const = 0
 error_force = []
 f_inv = 0.01
 f = 70
+force_plot = []
 
 deltat_a_ef = 0
 time_ef = []
@@ -115,7 +116,7 @@ graph_Ival = 0
 graph_Dval = 0
 
 #force_const_max = 5
-force_const_max = 2
+force_const_max = 3
 force_const_min = 0.5
 Kp = 0.005
 Ki = 0.0005
@@ -220,7 +221,7 @@ while m < limit_mi:
 	deltat_a = hold + deltat_a
 	
 	time1 = np.append(time1, deltat_a)
-	
+	force_plot = np.append(force_plot, force)
 	
 	wait = 1/f-(time.time()-time_start_a)
 	#print("wait", wait) 

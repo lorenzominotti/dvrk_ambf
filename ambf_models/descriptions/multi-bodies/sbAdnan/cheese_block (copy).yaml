@@ -23,14 +23,10 @@ BODY Cheese:
     specular: {b: 1.0, g: 1.0, r: 1.0}
     transparency: 1.0
   config: {
-    #kLST: 0.008,
-    kLST: 0.008,
-    #kLST: 0.08,
+    kLST: 0.08,
     kDP: 0.001, # damping
-    kDF: 1,  #
-    #kMT: 0.001, #original
-    kMT: 0.01,
-    kVC: 0.8,
+    kDF: 10.0,  #
+    kMT: 0.0005,
     clusters: 0,
     flags: 18,
     }

@@ -23,11 +23,12 @@ BODY base link:
     orientation: {p: 0.00, r: 0.00, y: 3.14} #standard
 #    position: {x: 1.5, y: 0.3, z: 0.25} #random
 #    orientation: {p: -0.0, r: 0.0, y: 1.57} #puzzle
-#    position: {x: 0.7, y: 1.0, z: 0.05} #position for cloth
+    position: {x: 0.7, y: 1.0, z: 0.05} #position for cloth
 #    position: {x: 0.7, y: 1.2, z: 0.07} #position for clothnew		
 #    position: {x: 0.5, y: 0.7, z: -0.68} #position for cheese
-#    position: {x: 0.8, y: 0.7, z: -0.68} #position for cheese2
-    position: {x: 0.8, y: 0.8, z: -0.73} #position for cheese3
+#    position: {x: -0.5, y: 1.0, z: -0.64} #position for cheesebig x0.0 y0.7 z-0.64works
+#    position: {x: 0.6, y: 0.9, z: -0.715} #position for cheese soft z-0.73 x 0.08
+#    position: {x: 0.8, y: 0.8, z: -0.73} #position for cheese3
 #    position: {x: 0.5, y: 0.7, z: -0.63} #position for soft box
 #    position: {x: 0.5, y: 0.6, z: -0.80} #position for cube
 #    position: {x: 0.0, y: 0.1, z: -0.5} #position for puzzle
@@ -146,11 +147,11 @@ BODY main insertion link:
   damping: {angular: 0.9, linear: 0.9}
   restitution: 0
   collision groups: [0]
-  color components:
-    ambient: {level: 1.0}
-    diffuse: {b: 0.0588, g: 0.5569, r: 1.0}
-    specular: {b: 1.0, g: 1.0, r: 1.0}
-    transparency: 0.4
+#  color components:
+#    ambient: {level: 1.0}
+#    diffuse: {b: 0.0588, g: 0.5569, r: 1.0}
+#    specular: {b: 1.0, g: 1.0, r: 1.0}
+#    transparency: 0.4
 BODY tool roll link:
   name: tool roll link
   mesh: tip_ball.STL

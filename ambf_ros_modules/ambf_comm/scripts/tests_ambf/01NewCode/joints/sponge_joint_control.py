@@ -45,6 +45,7 @@ class Joint_control:
 	#matplotlib.rc('font', **font)
 	error_force2 = []
 	graph_f2 = []
+	er = []
 
 	force_raw = []
 	graph_f = []
@@ -339,6 +340,7 @@ class Joint_control:
 			self.q2_plot = np.append(self.q2_plot, q2)
 			self.q3_plot = np.append(self.q3_plot, q3)
 			self.count_time_ef()
+			self.er = np.append(self.er, abs(error))
 
 			pos = psm_handle_trl.get_pos()
 			
@@ -369,11 +371,14 @@ class Joint_control:
 		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_sponge_joint_q1.csv', self.q1_plot, delimiter=",") 
 		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_sponge_joint_q2.csv', self.q2_plot, delimiter=",")
 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_sp_joint_error.csv', self.er, delimiter=",")
+
 		font = {'family' : 'normal',
        		#'weight' : 'normal',
         	'size'   : 20}
 
 		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
 	
 		#fdim = 12
 		fig, axs = plt.subplots(nrows = 4, sharex=True)
@@ -382,24 +387,24 @@ class Joint_control:
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
 		axs[0].set(ylabel = 'Force [N]')	
-		axs[0].legend(loc='best')
+		axs[0].legend(loc='upper left')
 		axs[0].set_title('SPONGE', fontsize=26)
 		axs[0].grid()
 
 		axs[1].plot(time, self.error_abs, color = 'r', label = "abs_error")
 		axs[1].set(ylabel = 'Abs_F_err [N]')
-		axs[1].legend(loc='best')
+		axs[1].legend(loc='upper left')
 		axs[1].grid()
 
 		axs[2].plot(time, self.q1_plot, label = "joint 1")
 		axs[2].plot(time, self.q2_plot, label = "joint 2")
 		axs[2].set(ylabel = 'Joints1_2 [deg]')
-		axs[2].legend(loc='best')
+		axs[2].legend(loc='upper left')
 		axs[2].grid()
 
 		axs[3].plot(time, self.q3_plot, color = 'g', label = "joint 3")
 		axs[3].set(xlabel = 'Time [s]', ylabel = 'Joint3 [m]')
-		axs[3].legend(loc='best')
+		axs[3].legend(loc='upper left')
 		axs[3].grid()
 
 		plt.show()

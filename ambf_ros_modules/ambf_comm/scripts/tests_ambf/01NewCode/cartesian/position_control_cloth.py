@@ -595,49 +595,58 @@ class Cartesian_control:
 			self.q2_v[i]=self.q2_v[i]*180/3.14
 			#self.q3_v[i]=self.q3_v[i]*180/3.14
 
+		font = {'family' : 'normal',
+       	#'weight' : 'normal',
+        'size'   : 18}
 
+		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
 			
-		fig, axs = plt.subplots(nrows = 3)
-
+		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig.subplots_adjust(hspace=0.25)
+		
 		#axs[0].plot(time, self.px, color = 'r', label = " xAMBF")
 		#axs[0].plot(time, self.xr_plot, color = 'b', label = "fk_(q1_sim)")
 		#axs[0].plot(time, x_des, color = 'g', label = "fk(q_des)")
-		
+		axs[0].plot(time, self.xd_plot , color = 'b', label = "x commanded")
+		'''
 		axs[0].plot(time, self.q1_v, color = 'g', label = " q1_des")
 		axs[0].plot(time, self.q1_r, color = 'b', label = " q1_sim")
 		axs[0].plot(time, q1, color = 'r', label = "ik(AMBFx)")
-		
+		'''
 		#axs[0].plot(time, x1, color = 'b', label = " fk(ik(xAMBF))")
-		axs[0].set(ylabel = 'Q1 [degree]')
-		#axs[0].set(ylabel = 'X [m]')	
+		#axs[0].set(ylabel = 'Q1 [degree]')
+		axs[0].set(ylabel = 'X [m]')	
 		axs[0].legend(loc='best')
 		axs[0].grid()
 
 		#axs[1].plot(time,self.py, color = 'r', label = "yAMBF")
 		#axs[1].plot(time, self.yr_plot, color = 'b', label = "fk_(q2_sim)")
 		#axs[1].plot(time, y_des, color = 'g', label = "fk(q_des)")
-		
+		axs[1].plot(time, self.yd_plot , color = 'b', label = "y commanded")
+		'''
 		axs[1].plot(time, self.q2_v, color = 'g', label = " q2_des")
 		axs[1].plot(time, self.q2_r, color = 'b', label = " q2_sim")
 		axs[1].plot(time, q2, color = 'r', label = "ik(AMBFy)")
-		
+		'''
 		#axs[1].plot(time, y1, color = 'b', label = " fk(ik(yAMBF))")
-		axs[1].set(ylabel = 'Q2 [degree]')	
-		#axs[1].set(ylabel = 'Y [m]')
+		#axs[1].set(ylabel = 'Q2 [degree]')	
+		axs[1].set(ylabel = 'Y [m]')
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
-		#axs[2].plot(time,self.pz, color = 'r', label = "zAMBF")
+		axs[2].plot(time,self.pz, color = 'r', label = "z AMBF")
 		#axs[2].plot(time, self.zr_plot, color = 'b', label = "fk_(q3_sim)")
 		#axs[2].plot(time, z_des, color = 'g', label = "fk(q_des)")
-		
+		axs[2].plot(time, self.zr_plot, color = 'g', label = "z FK")
+		'''
 		axs[2].plot(time, self.q3_v, color = 'g', label = " q3_des")
 		axs[2].plot(time, self.q3_r, color = 'b', label = " q3_sim")
 		axs[2].plot(time, q3, color = 'r', label = "ik(AMBFz)")
-		
+		'''
 		#axs[2].plot(time, z1, color = 'b', label = " fk(ik(zAMBF))")
-		axs[2].set(ylabel = 'Q3 [m]')
-		#axs[2].set(ylabel = 'Z [m]')	
+		#axs[2].set(ylabel = 'Q3 [m]')
+		axs[2].set(xlabel = 'Time [s]', ylabel = 'Z [m]')	
 		axs[2].legend(loc='best')
 		axs[2].grid()
 		'''
@@ -899,7 +908,7 @@ def main():
 	cart_c.reach_XY_pos_control(0.05, -0.01, -0.18, False)
 	'''
 	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.226, True)#std val
-	cart_c.reach_XY_pos_control(0.05, 0.07, -0.2065, True)#std val 0.02
+	cart_c.reach_XY_pos_control(0.07, 0.07, -0.2065, True)#std val 0.02
 	#cart_c.reach_XY_pos_control(0.02, 0.06, -0.196, False)#std val
 	#cart_c.reach_XY_pos_control(0.05, 0.07, -0.2015, False)#std val 0.025
 	#cart_c.reach_XY_pos_control(0.02, 0.04, -0.246, False)

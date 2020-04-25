@@ -102,6 +102,8 @@ band2 = 0.3 #cloth
 limit_mi = 0.30
 limit_mi_2 = 0.09
 hold1 = 4
+force =[]
+time = []
 
 
 deltat_a = 0

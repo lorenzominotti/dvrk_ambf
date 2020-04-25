@@ -81,7 +81,7 @@ class Cartesian_control:
 	degree = 0
 	delta = 0.6 
 	delta_m = 0.00005
-	delta_m_start = 0.0003 #0.0003 originally
+	delta_m_start = 0.0003
 	band = 0.05
 	band2 = 0.5
 	limit_mi = 0.30
@@ -104,6 +104,17 @@ class Cartesian_control:
 
 	T = np.zeros((4,4))
 
+	graph_pxd =[]
+	graph_pyd = []
+	graph_pzd = []
+
+	f = []
+	fd = []
+	z = []
+	er = []
+
+
+
 	#Kp_start = 0.000001
 	#Ki_start = 0.000001
 
@@ -120,22 +131,29 @@ class Cartesian_control:
 	Derivator = 0
 	time_now = 0
 
-	cont1 = 0
-
 	flag_first_pos = True
 
-	
+	'''
 	Kp = 0.0015 #good2  <--------
 	Ki = 0.000008
 	'''
-	
+	'''
 	Kp = 0.0006 #test  <--------
 	Ki = 0.00008
 	'''
 	'''
+	Kp = 0.0015#0.0015 default #test  <--------
+	Ki = 0.0004#0.0004 default
+	'''
+	
+	Kp = 0.0006 #sponge soft  <--------
+	Ki = 0.0004
+	
+	'''
 	Kp = 0.0001
 	Ki = 0.00000008  #bad
 	'''
+	
 
 	Integrator = 0
 	Integratorx = 0
@@ -271,19 +289,33 @@ class Cartesian_control:
 		plt.show()
 
 
-	def plot_complete(self):
+	def plot_force(self):
+
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_cart_time.csv', time2, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/05_rb_cart_force.csv', self.graph_f2, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_plots/joints/01_sp_cart_error.csv', self.er, delimiter=",")
 
 		time = []
 		time = self.time
 		time_ef = []
 		time2 = self.time_ef
 
+		#fdim = 12
+		font = {'family' : 'normal',
+       	#'weight' : 'normal',
+        'size'   : 18}
+
+		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
+			
 		fig, axs = plt.subplots(nrows = 4, sharex=True)
 		fig.subplots_adjust(hspace=0.25)
+		
 
 		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
 		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
 		axs[0].set(ylabel = 'Force [N]')
+		#axs[0].set_title('SPONGE', fontsize=24)
 		#axs[0].set_xticklabels([],rotation=0, fontsize=1)
 		#axs[0].tick_params(labelsize=fdim)	
 		axs[0].legend(loc='best')
@@ -296,25 +328,25 @@ class Cartesian_control:
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
-		axs[2].plot(time, self.graph_px, label = "posx")
-		axs[2].plot(time, self.graph_py, label = "posy")
-		axs[2].set(ylabel = 'pos_xy [cm]')
+		axs[2].plot(time, self.graph_px, label = "posX")
+		axs[2].plot(time, self.graph_py, label = "posY")
+		axs[2].set(ylabel = 'pos_xy [m]')
 		#axs[3].set(xlabel = 'Time [s]')	
 		#axs[3].set_xticklabels([],rotation=0, fontsize=1)
 		#axs[3].tick_params(labelsize=fdim)
-		axs[2].set(xlabel = 'Time [s]')	
+		
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
-		axs[3].plot(time, self.graph_pz, color = 'g', label = "posz" )
-		axs[3].plot(time, self.pz, color = 'r', label = "AMBF")
-		axs[3].set(ylabel = 'pos_z [cm]')
+		#axs[3].plot(time, self.graph_pz, color = 'r', label = "posz" )
+		axs[3].plot(time, self.pz, color = 'g', label = "posZ")
+		axs[3].set(ylabel = 'pos_z [m]')
 		#axs[1].set(xlabel = 'Time [s]')	
 		#axs[1].set_xticklabels([],rotation=0, fontsize=1)
 		#axs[1].tick_params(labelsize=fdim)	
 		axs[3].legend(loc='best', fontsize = 'small')
+		axs[3].set(xlabel = 'Time [s]')	
 		axs[3].grid()
-		
 		'''
 		axs[4].plot(time, self.er_z, color = 'g', label = "err_posz")
 		axs[4].set(ylabel = 'Z_er [mm]')
@@ -329,162 +361,6 @@ class Cartesian_control:
 		plt.show()
 
 
-	def plot_F_a(self):
-
-		time = []
-		time = self.time
-		time_ef = []
-		time2 = self.time_ef
-		vz = np.zeros(time.size)
-		azr = np.zeros(time.size)
-		az = np.zeros(time.size)
-
-		for i in range(0,time.size-1):
-			dpz = self.pz[i+1]-self.pz[i-1]
-			dt = time[i+1]-time[i]
-			vz[i] = dpz/dt
-
-		vz[time.size-1] = vz[time.size-2]
-
-
-		count = 0
-		window = []
-		window_size = 10
-		sum = 0
-		count1 = 0
-
-		for i in range(0,time.size-2):
-			dvz = vz[i+1]-vz[i-1]
-			dt = time[i+1]-time[i]
-			azr[i] = dvz/dt
-
-
-			count = count + 1
-			if count < window_size + 1:
-				window = np.append(window, azr[i])
-				az[i] = azr[i]
-			else:
-				for j in range(1, window_size):
-					window[j-1] = window[j]
-					if j == (window_size - 1):
-						window[j] = azr[i]
-					sum = sum + window[j-1]
-				az[i] = sum / window_size
-				sum = 0
-
-			if az[i]>2:
-				az[i]=0
-			if az[i]<-2:
-				az[i]=0
-		
-
-
-		az[time.size-2] = az[time.size-3]
-		az[time.size-1] = az[time.size-2]
-
-		graph_f1 = np.zeros(time.size)
-		
-
-		maxf = 0
-		maxv = 0
-		maxa = 0
-		f_read = np.zeros(time.size)
-
-		graph_f1 = self.graph_f-self.graph_fd
-
-		for i in range(0,time.size):
-
-			if i < self.cont1+5:
-				graph_f1[i] = 0
-				vz[i] = 0
-				az[i] = 0
-			#else:
-				#graph_f1[i] = self.graph_f[i]-self.amplitude
-
-			
-
-			if abs(graph_f1[i]) > maxf:
-				maxf = abs(graph_f1[i])
-
-			if abs(az[i]) > maxa:
-				maxa = abs(az[i])
-
-			if abs(vz[i]) > maxv:
-				maxv = abs(vz[i])
-
-
-
-		if maxa > maxf:
-			maxim = maxa
-		else:
-			maxim = maxf
-		#for i in range(0,time.size):
-		f_read = (graph_f1)/maxim
-		a_norm = az/maxim
-		a_n = az/maxa
-		v_n = vz/maxv
-
-
-		fig, axs = plt.subplots(nrows = 6, sharex=True)
-		fig.subplots_adjust(hspace=0.25)
-
-		axs[0].plot(time, self.graph_f, color = 'r', label = "actual force")
-		axs[0].plot(time, self.graph_fd, color = 'b', label = "target force")
-		axs[0].set(ylabel = 'Force [N]')
-		#axs[0].set_xticklabels([],rotation=0, fontsize=1)
-		#axs[0].tick_params(labelsize=fdim)	
-		axs[0].legend(loc='best')
-		axs[0].grid()
-
-		axs[1].plot(time, a_n, color = 'r', label = "az")
-		axs[1].set(ylabel = 'az [m/s^2]')
-		#axs[1].set_ylim([-2, 2])
-		#axs[1].set_xticklabels([],rotation=0, fontsize=1)
-		#axs[1].tick_params(labelsize=fdim)
-		axs[1].legend(loc='best')
-		axs[1].grid()
-
-		axs[2].plot(time, v_n, label = "vz")
-		axs[2].set(ylabel = 'vz [m/s]')
-		#axs[2].set_ylim([-0.8, 0.8])
-		#axs[3].set(xlabel = 'Time [s]')	
-		#axs[3].set_xticklabels([],rotation=0, fontsize=1)
-		#axs[3].tick_params(labelsize=fdim)
-		axs[2].set(xlabel = 'Time [s]')	
-		axs[2].legend(loc='best')
-		axs[2].grid()
-
-		axs[3].plot(time, self.graph_pz, color = 'g', label = "posz" )
-		axs[3].plot(time, self.pz, color = 'r', label = "AMBF")
-		axs[3].set(ylabel = 'pos_z [m]')
-		#axs[1].set(xlabel = 'Time [s]')	
-		#axs[1].set_xticklabels([],rotation=0, fontsize=1)
-		#axs[1].tick_params(labelsize=fdim)	
-		axs[3].legend(loc='best', fontsize = 'small')
-		axs[3].grid()
-
-
-		axs[4].plot(time, a_norm, color = 'b', label = "a norm")
-		axs[4].plot(time, f_read, color = 'r', label = "force norm")
-		axs[4].set(ylabel = 'F&a_norm [-]')
-		#axs[0].set_xticklabels([],rotation=0, fontsize=1)
-		#axs[0].tick_params(labelsize=fdim)	
-		axs[4].legend(loc='best')
-		axs[4].grid()
-
-		axs[5].plot(time, self.graph_px, color = 'b', label = "posx")
-		axs[5].plot(time, self.graph_py, color = 'r', label = "posy")
-		axs[5].set(ylabel = 'pos_X_Y [cm]')
-		axs[5].legend(loc='best', fontsize = 'small')
-		axs[5].grid()
-
-		
-		plt.show()
-
-
-
-
-	
 	def plot_complete1(self):
 
 		time = []
@@ -547,7 +423,7 @@ class Cartesian_control:
 
 	
 	def approach_goal_Z(self, m_start):
-		f = 30
+		f = 50
 		self.m = m_start
 		force_old2 = 0
 		force_old1 = 0
@@ -591,7 +467,8 @@ class Cartesian_control:
 			self.count_time()		
 			self.graph_px = np.append(self.graph_px, 0)
 			self.graph_py = np.append(self.graph_py, 0)
-			self.graph_pz = np.append(self.graph_pz, -0.18)
+			self.graph_pz = np.append(self.graph_pz, -0.2051)#soft
+			#self.graph_pz = np.append(self.graph_pz,-0.21688)
 			PID = 1
 
 			self.graph_frn = np.append(self.graph_frn, force_raw_now)
@@ -600,10 +477,15 @@ class Cartesian_control:
 
 			self.px = np.append(self.px, 0)
 			self.py = np.append(self.py, 0)
-			self.pz = np.append(self.pz, -0.18)
+			#self.pz = np.append(self.pz, -0.23)
+			self.pz = np.append(self.pz, -0.2051)
 			self.q1_r = np.append(self.q1_r, 0)
 			self.q2_r = np.append(self.q2_r, 0)
 			self.q3_r = np.append(self.q3_r, 0)
+			self.graph_pxd = np.append(self.graph_pxd, 0)
+			self.graph_pyd = np.append(self.graph_pyd, 0)
+			self.graph_pzd = np.append(self.graph_pzd, -0.2051)
+
 
 
 			#lines below to plot even x and y components of the force in the world reference frame
@@ -620,14 +502,13 @@ class Cartesian_control:
 			'''
 			
 			ex = 0
-			self.er_x = np.append(self.er_x, ex)
+			self.er_x = np.append(self.er_x, 0)
 			ey = 0
-			self.er_y = np.append(self.er_y, ey)
+			self.er_y = np.append(self.er_y, 0)
 			ez = 0
-			self.er_z = np.append(self.er_z, ez)
+			self.er_z = np.append(self.er_z, 0)
 			self.error_abs = np.append(self.error_abs, 0)
 
-			self.cont1 = self.cont1+1
 			wait = 1/f - (time.time() - self.time_start_a) 
 			if wait>0:
 				time.sleep(wait)
@@ -725,7 +606,7 @@ class Cartesian_control:
 
 	def reach_XY_force_control(self, goal_x, goal_y):
 
-		self.f_cycle = 100
+		self.f_cycle = 40
 		self.exp_time = 10
 		dim = self.f_cycle*self.exp_time
 
@@ -762,9 +643,6 @@ class Cartesian_control:
 		q1_r = np.zeros(dim)
 		q2_r = np.zeros(dim)
 		q3_r = np.zeros(dim)
-		ex = np.zeros(dim)
-		ey = np.zeros(dim)
-		ez = np.zeros(dim)
 		flag = 0
 
 		print(zfk[0])
@@ -773,6 +651,7 @@ class Cartesian_control:
 
 			starttime=time.time()
 			self.count_time()
+			self.count_time_ef()
 			self.time_start_a = time.time()
 
 			q1_r,q2_r,q3_r[j] = self.get_position_joints_PSM()
@@ -788,7 +667,7 @@ class Cartesian_control:
 			#################################################################
 
 			force_raw_now = psm_handle_mi.get_force()
-			
+
 			count = count + 1
 			if count < window_size + 1:
 				window = np.append(window, force_raw_now)
@@ -801,7 +680,6 @@ class Cartesian_control:
 					sum = sum + window[i-1]
 				self.force = sum / window_size
 				sum = 0
-			
 
 			error = self.force_const - self.force
 			er_a[j] = abs(error)
@@ -812,28 +690,22 @@ class Cartesian_control:
 			self.I_value = self.Integrator * self.Ki
 				
 			PID = self.P_value + self.I_value
-			zd = zfk[j] + PID*zfk[j]
-			#zd = pz_v[j] + PID*pz_v[j]
+			#zd = zfk[j] + PID*zfk[j]
+			zd = pz_v[j] + PID*pz_v[j]
 
 			z_v[j] = zd
 
-			q1,q2,q3 = self.inverse_kinematics(x_v[j], y_v[j], z_v[j])
-			#q1,q2,q3 = self.inverse_kinematics(x_v[j], y_v[j], z_v[j])
+			q1,q2,q3 = self.inverse_kinematics(x_v[j],y_v[j], z_v[j])
 		
-			
+			self.er_z = np.append(self.er_z, z_v[j]-pz_v[j])
 			self.set_position_robot(q1,q2,q3)
 
 			self.graph_f_cycle[j] = self.force
 			self.graph_fd_cycle[j] = self.force_const
 			self.error_force_cycle[j] = e_rel
 
-			ex[j] = x_v[j]-px_v[j]
-			ey[j] = y_v[j]-py_v[j]
-			ez[j] = z_v[j]-pz_v[j]
-
-
 			
-			print(ex[j])
+			print(self.force)
 			
 			j=j+1
 
@@ -846,6 +718,11 @@ class Cartesian_control:
 		self.graph_px = np.append(self.graph_px, x_v)
 		self.graph_py = np.append(self.graph_py, y_v)
 		self.graph_pz = np.append(self.graph_pz, z_v)
+		self.graph_pxd = np.append(self.graph_pxd, xfk)
+		self.graph_pyd = np.append(self.graph_pyd, yfk)
+		self.graph_pzd = np.append(self.graph_pzd, pz_v)
+		self.z = np.append(self.z, pz_v)
+
 
 		self.px = np.append(self.px, px_v)
 		self.py = np.append(self.py, py_v)
@@ -854,113 +731,188 @@ class Cartesian_control:
 		self.q2_r = np.append(self.q2_r, q2_r)
 		self.q3_r = np.append(self.q3_r, q3_r)
 	
+	
+		
+
+
 
 		for i in range (0,dim):
 
-			#self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
-			#self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
-			#self.er_z = np.append(self.er_z, z_v[i]-zfk[i])
-			self.er_x = np.append(self.er_x, ex[i])
-			self.er_y = np.append(self.er_y, ey[i])
-			self.er_z = np.append(self.er_z, ez[i])
+			self.er_x = np.append(self.er_x, x_v[i]-xfk[i])
+			self.er_y = np.append(self.er_y, y_v[i]-yfk[i])
+			
 			self.graph_f = np.append(self.graph_f, self.graph_f_cycle[i])
 			self.graph_fd = np.append(self.graph_fd, self.graph_fd_cycle[i])
 			self.error_force = np.append(self.error_force, self.error_force_cycle[i])		
 			self.graph_f2 = np.append(self.graph_f2, self.graph_f_cycle[i])
 			self.error_force2 = np.append(self.error_force2, self.error_force_cycle[i])
 			self.error_abs = np.append(self.error_abs, er_a[i])
+			self.f = np.append(self.f, self.graph_f_cycle[i])
+			self.fd = np.append(self.fd, self.graph_fd_cycle[i])
+			self.er = np.append(self.er, er_a[i])
+			
+
 
 
 	
 
-	def plot_new0(self):
+	def plot_properties(self):
 
-		
 		time = []
-		time = self.time
-		time_ef = []
-		time_ef = self.time_ef
+		time = self.time_ef
 
-		dimension = time.size
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kLST_t.csv', time, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kLST_f.csv', self.f, delimiter=",") 
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kLST_fd.csv', self.fd, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kLST_er.csv', self.er, delimiter=",")
+		#np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kLST_z.csv', self.z, delimiter=",")
 
-		x = []
-		y = []
-		z = []
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kMT_t.csv', time, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kMT_f.csv', self.f, delimiter=",") 
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kMT_fd.csv', self.fd, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kMT_er.csv', self.er, delimiter=",")
+		np.savetxt('ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/test_properties/03_sp_kMT_z.csv', self.z, delimiter=",")
 
-		x,y,z = self.compute_inverse_kinematics(self.px, self.py, self.pz)
-		#xfk,yfk,zfk = self.compute_forward_kinematics(x,y,z)
+		font = {'family' : 'normal',
+       	#'weight' : 'normal',
+        'size'   : 18}
 
-
+		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
 			
-		fig, axs = plt.subplots(nrows = 3)
+		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig.subplots_adjust(hspace=0.25)
 
-		axs[0].plot(time, self.px, color = 'r', label = "xAMBF")
-		axs[0].plot(time, self.graph_px, color = 'b', label = "x1")
-		axs[0].set(ylabel = '1 [m]')	
+		axs[0].plot(time, self.f, color = 'r', label = "F read")
+		axs[0].plot(time, self.fd, color = 'b', label = "F des")
+		#axs[0].set_title('SPONGE', fontsize=24)
+		axs[0].set(ylabel = 'Force [N]')	
 		axs[0].legend(loc='best')
 		axs[0].grid()
-
-		axs[1].plot(time, self.py, color = 'r', label = "yAMBF")
-		axs[1].plot(time, self.graph_py, color = 'b', label = "y2")
-		axs[1].set(ylabel = '2 [m]')	
+		
+		axs[1].plot(time, self.er, color = 'r', label = "abs force err")		
+		axs[1].set(ylabel = 'Abs_err [N]')	
 		axs[1].legend(loc='best')
 		axs[1].grid()
 
-		axs[2].plot(time, self.pz, color = 'r', label = "zAMBF")
-		axs[2].plot(time, self.graph_pz, color = 'b', label = "z3")
-		axs[2].set(ylabel = '3 [m]')	
+		axs[2].plot(time, self.z, color = 'g', label = "Z pos")
+		axs[2].set(ylabel = 'Z pos [m]')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
+		'''
+		axs[3].plot(time, self.er_z, color = 'g', label = "err_posz")
+		axs[3].set(ylabel = 'z_err [m]')
+		axs[3].set(xlabel = 'Time [s]')	
+		axs[3].legend(loc='best')
+		axs[3].grid()
+		'''
+
 		plt.show()
 
-		
 
 
-	def plot_new(self):
+
+
+
+
+
+
+
+
+
+
+
+	def plot_positions(self):
 		
 		time = []
 		time = self.time
 		time_ef = []
 		time_ef = self.time_ef
 	
-		fig, axs = plt.subplots(nrows = 6)
+		font = {'family' : 'normal',
+       	#'weight' : 'normal',
+        'size'   : 18}
 
-		axs[0].plot(time, self.px, color = 'r', label = "actual x")
+		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
+			
+		fig, axs = plt.subplots(nrows = 4, sharex=True)
+		fig.subplots_adjust(hspace=0.25)
+
+		axs[0].plot(time, self.graph_pxd, color = 'r', label = "actual x")
 		axs[0].plot(time, self.graph_px, color = 'b', label = "target x")
+		axs[0].plot(time, self.graph_pyd, color = 'g', label = "actual y")
+		axs[0].plot(time, self.graph_py, color = 'm', label = "target y")
+		axs[0].set_title('SPONGE', fontsize=24)
 		axs[0].set(ylabel = 'Pos_x [m]')	
-		axs[0].legend(loc='best')
+		axs[0].legend(loc='upper left')
 		axs[0].grid()
-
-		axs[1].plot(time, self.py, color = 'r', label = "actual y")
-		axs[1].plot(time, self.graph_py, color = 'b', label = "target y")
+		'''
+		axs[1].plot(time, self.graph_pyd, color = 'm', label = "actual y")
+		axs[1].plot(time, self.graph_py, color = 'v', label = "target y")
 		axs[1].set(ylabel = 'Pos_y [m]')	
 		axs[1].legend(loc='best')
 		axs[1].grid()
+		'''
+		
+		axs[1].plot(time, self.graph_pzd, color = 'r', label = "actual z")
+		axs[1].plot(time, self.graph_pz, color = 'b', label = "target z")
+		axs[1].set(ylabel = 'Pos_z [m]')	
+		axs[1].legend(loc='best')
+		axs[1].grid()
 
-		axs[2].plot(time, self.pz, color = 'r', label = "actual z")
-		axs[2].plot(time, self.graph_pz, color = 'b', label = "target z")
-		axs[2].set(ylabel = 'Pos_z [m]')	
+		axs[2].plot(time, self.er_x, color = 'b', label = "err_posx")
+		axs[2].plot(time, self.er_y, color = 'r', label = "err_posy")
+		axs[2].set(ylabel = 'x_y_err [m]')
 		axs[2].legend(loc='best')
 		axs[2].grid()
 
-		axs[3].plot(time, self.er_x, label = "err_posx")
-		axs[3].set(ylabel = 'posx_error [m]')
+		axs[3].plot(time, self.er_z, color = 'g', label = "err_posz")
+		axs[3].set(ylabel = 'z_err [m]')
+		axs[3].set(xlabel = 'Time [s]')	
 		axs[3].legend(loc='best')
 		axs[3].grid()
 
-		axs[4].plot(time, self.er_y, label = "err_posy")
-		axs[4].set(ylabel = 'posy_error [m]')
-		axs[4].legend(loc='best')
-		axs[4].grid()
+		plt.show()
 
-		axs[5].plot(time, self.er_z, label = "err_posz")
-		axs[5].set(ylabel = 'posz_error [m]')
-		axs[5].set(xlabel = 'Time [s]')	
-		axs[5].legend(loc='best')
-		axs[5].grid()
+	def	issueZ(self):
+
+
+		time = []
+		time = self.time
+		time_ef = []
+		time_ef = self.time_ef
+
+		font = {'family' : 'normal',
+       	#'weight' : 'normal',
+        'size'   : 18}
+
+		matplotlib.rc('font', **font)
+		matplotlib.rc('legend',fontsize=15)
+			
+		fig, axs = plt.subplots(nrows = 3, sharex=True)
+		fig.subplots_adjust(hspace=0.25)
+		
+		axs[0].plot(time, self.graph_px , color = 'b', label = "x commanded")
+		axs[0].set(ylabel = 'X [m]')	
+		axs[0].legend(loc='best')
+		axs[0].grid()
+
+	
+		axs[1].plot(time, self.graph_py , color = 'b', label = "y commanded")
+		axs[1].set(ylabel = 'Y [m]')
+		axs[1].legend(loc='best')
+		axs[1].grid()
+
+		axs[2].plot(time,self.pz, color = 'r', label = "z AMBF")
+		axs[2].plot(time, self.graph_pz, color = 'g', label = "z FK")
+		axs[2].set(xlabel = 'Time [s]', ylabel = 'Z [m]')	
+		axs[2].legend(loc='best')
+		axs[2].grid()
 
 		plt.show()
+
 
 
 	def define_path_cal(self, goal_x, goal_y, goal_z,start):
@@ -1114,6 +1066,8 @@ class Cartesian_control:
 	
 def main():
 
+	psm_handle_pel.set_joint_pos(0, 0)
+	raw_input("Number of joints of pitchfrontLink")
 	# Let's sleep for a very brief moment to give the internal callbacks
 	# to sync up new data from the running simulator
 	time.sleep(0.2)
@@ -1158,10 +1112,11 @@ def main():
 	time.sleep(2)
 	psm_handle_pel.set_joint_pos(0, 0)
 	time.sleep(1)
-
+	
 	#cart_c.calibration()
 
 	psm_handle_pel.set_joint_pos(0, 0)
+	
 	m_start =  0.135#0.155 cheese3
 	psm_handle_pel.set_joint_pos(0, m_start)
 	time.sleep(2)
@@ -1196,13 +1151,16 @@ def main():
 	#cart_c.reach_XY_force_control(0.05, 0.1)
 	#cart_c.reach_XY_force_control(0.01,-0.08)
 
-	cart_c.reach_XY_force_control(0.01, 0.07)
-	cart_c.reach_XY_force_control(0.05,-0.04)
-	#cart_c.reach_XY_force_control(0.0,-0.0)
-	#cart_c.reach_XY_force_control(0.01, 0.07)
-	#cart_c.reach_XY_force_control(0.07,-0.02)
+
+	########this two!!!!!!!!
+	cart_c.reach_XY_force_control(0.01, 0.1)
+	cart_c.reach_XY_force_control(0.1,-0.02)
 	#cart_c.reach_XY_force_control(0.01, 0.1)
 	#cart_c.reach_XY_force_control(0.1,-0.02)
+
+	#cart_c.reach_XY_force_control(0.07, 0.07)
+
+	#cart_c.issueZ()
 
 
 	#cart_c.plot_new0()
@@ -1211,20 +1169,22 @@ def main():
 
 	
 	print('STEP1')	
-	cart_c.plot_new()
-	time.sleep(2)
-	cart_c.plot_complete()
-	time.sleep(2)
-	cart_c.plot_F_a()
-	#cart_c.plot_complete1()
 
+	cart_c.plot_force()
+	#time.sleep(1)
+	#cart_c.plot_positions()
 
-	raw_input("Let's clean up. Press Enter to continue...")
+	#cart_c.plot_properties()
+	
+
+	#raw_input("Let's clean up. Press Enter to continue...")
 	# Lastly to cleanup
 	_client.clean_up()
 
 if __name__ == "__main__":
     main()
+
+
 
 '''
 FREQUENZA_CICLO=100Hz
@@ -1268,3 +1228,21 @@ def move_to_joint_pos(self):
 		sleep(1/FREQUENZA_CICLO)
 	end
 '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+m_start =  0.155#0.155 cheese3

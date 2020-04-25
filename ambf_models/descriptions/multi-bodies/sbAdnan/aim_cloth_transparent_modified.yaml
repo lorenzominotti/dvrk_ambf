@@ -25,11 +25,11 @@ BODY aim-cloth:
     position: {x: 0.0, y: 0.0, z: 0.0}
   color: green
   config: { 
-    kLST: 0.8,
+    kLST: 0.1,
 #    kLST: 0.3,
     # kAST: 0.5,
     kDP: 0.8,
-    kMT: 0.0008,
+    kMT: 0.05,
 #   kMT: 0.008,
     piterations: 2,
     kDF: 0, 
