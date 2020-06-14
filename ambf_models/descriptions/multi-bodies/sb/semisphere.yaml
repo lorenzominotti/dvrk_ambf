@@ -23,7 +23,7 @@ BODY Sphere_001:
       x: 0.0
       y: 0.0
       z: 0.0
-  color: random
+  color: green
   config: {
     kDP: 0.001, # damping
 #    kDF: 10.0,  #

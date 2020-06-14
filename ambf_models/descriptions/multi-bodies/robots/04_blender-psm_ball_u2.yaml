@@ -19,20 +19,22 @@ BODY base link:
   mass: 0.0
   collision margin: 0.001
   scale: 1.0
-  location:
+
+# orientation is the same in any case. To set the desired PSM position, just uncomment the line of interest
+ 
+##################################################### control files are in ambf/ambf_ros_modules/ambf_comm/scripts/tests_ambf/01NewCode/cartesian ##################################
+																		
+  location:        #same orientation for all bodies        #file.yaml of bodies for each position of PSM    #coefficients specified in control file	#control file for each body
     orientation: {p: 0.00, r: 0.00, y: 3.14} #standard
-#    position: {x: 1.5, y: 0.3, z: 0.25} #random
-#    orientation: {p: -0.0, r: 0.0, y: 1.57} #puzzle
-    position: {x: 0.7, y: 1.0, z: 0.05} #position for cloth
-#    position: {x: 0.7, y: 1.2, z: 0.07} #position for clothnew		
-#    position: {x: 0.5, y: 0.7, z: -0.68} #position for cheese
-#    position: {x: -0.5, y: 1.0, z: -0.64} #position for cheesebig x0.0 y0.7 z-0.64works
-#    position: {x: 0.6, y: 0.9, z: -0.715} #position for cheese soft z-0.73 x 0.08
-#    position: {x: 0.8, y: 0.8, z: -0.73} #position for cheese3
-#    position: {x: 0.5, y: 0.7, z: -0.63} #position for soft box
-#    position: {x: 0.5, y: 0.6, z: -0.80} #position for cube
-#    position: {x: 0.0, y: 0.1, z: -0.5} #position for puzzle
-#    position: {x: 0.5, y: 0.1, z: -0.18} #position for cyl
+    position: {x: 0.7, y: 1.0, z: 0.05}    #position for    multi-bodies/sbAdnan/cloth_default        	    Kp = 0.0010 Ki = 0.0008                     force_control_cloth.py
+#    position: {x: -0.5, y: 1.2, z: -0.64}  #position for    multi-bodies/sponge_big_moreV             	    kp = 0.0015 ki = 0.0004			force_control_sponge.py		
+#    position: {x: 0.6, y: 0.9, z: -0.745}  #position for    multi-bodies/sbAdnan/cheese_soft               Kp = 0.0006 Ki = 0.0004			force_control_sponge.py
+#    position: {x: 0.8, y: 0.8, z: -0.73}   #position for    multi-bodies/sbAdnan/cheese_default       	    Kp = 0.0015 Ki = 0.0004			force_control_sponge.py				
+#    position: {x: 0.6, y: 0.8, z: -0.73}   #position for    multi-bodies/sponge_moreV         	            Kp = 0.0008 Ki = 0.0004			force_control_sponge.py
+#    position: {x: 0.5, y: 0.1, z: -0.18}   #position for    multi-bodies/cyl02			     	    kp = 0.0015 ki = 0.0008			force_control_rb.py
+  
+
+
   inertial offset:
     orientation: {p: 0, r: 0, y: 0}
     position: {x: 0.0, y: -0.086, z: -0.043}

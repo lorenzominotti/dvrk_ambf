@@ -18,14 +18,14 @@ namespace: /ambf/env/
 BodyA:
   name: box01
   mesh: box.stl
-  mass: 2.0
+  mass: 3.0
   collision margin: 0.001
   location:
 #    position: {x: 0.499, y: 0.214, z: 0.184}       
 #    orientation: {r: -0.001, p: -3.141, y: 2.567}
     orientation: {p: 0.001, r: -1.571, y: 1.569}
 #    position: {x: 0.499, y: 0.514, z: -0.693} #02 ros
-    position: {x: 0.499, y: -0.45, z: 0.5}
+    position: {x: -0.1, y: -0.45, z: 0.3}
 #orientation: {r: -1.001, p: -0.191, y: 2.217}
   color: green
 

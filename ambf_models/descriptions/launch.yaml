@@ -28,9 +28,20 @@ multibody configs:
   - "./multi-bodies/environments/KnotEnv3/env.yaml" #21
   - "./multi-bodies/environments/TexturedGround/env.yaml" #22
   - "./multi-bodies/sb/cloth.yaml" #23
-  - "./multi-bodies/box01.yaml" #24
-  - "./multi-bodies/sphere01.yaml" #25
-  - "./multi-bodies/plane01.yaml" #26
-  - "./multi-bodies/sb/cloth_constrained.yaml" #27
-  - "./multi-bodies/robots/gripper_psm.yaml" #28
+  - "./multi-bodies/robots/gripper_psm.yaml" #24
+  - "./multi-bodies/PSM_CONFIGS_EXP/PSM_cyl.yaml"  #25
+  - "./multi-bodies/BODIES_EXPERIMENTS/cyl.yaml"  #26
+  - "./multi-bodies/PSM_CONFIGS_EXP/PSM_sponge_default.yaml"  #27
+  - "./multi-bodies/BODIES_EXPERIMENTS/sponge_default.yaml"  #28
+  - "./multi-bodies/PSM_CONFIGS_EXP/PSM_cloth_default.yaml"  #29
+  - "./multi-bodies/BODIES_EXPERIMENTS/cloth_default.yaml"  #30
+  - "./multi-bodies/PSM_CONFIGS_EXP/PSM_sponge_soft.yaml"  #31
+  - "./multi-bodies/BODIES_EXPERIMENTS/sponge_soft.yaml"  #32
+  - "./multi-bodies/PSM_CONFIGS_EXP/PSM_sponge_moreV.yaml"  #33
+  - "./multi-bodies/BODIES_EXPERIMENTS/sponge_moreV.yaml"  #34
 
+
+
+
+
+  
