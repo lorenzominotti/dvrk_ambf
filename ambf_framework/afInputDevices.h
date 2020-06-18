@@ -253,8 +253,15 @@ public:
 private:
     std::mutex m_mutex;
     void updateCursorPose();
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///Now, here m_dev_force_enabled was set to false, but I think it was an error. To have the Omega.7 correctly
+    ///working, with the haptic feedback, set it true
 //    bool m_dev_force_enabled = false;
     bool m_dev_force_enabled = true;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 public:
     // Initial offset between the simulated end effector and the

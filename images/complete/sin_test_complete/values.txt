@@ -1,2 +1,0 @@
-A step=0.5
-B step=2.5

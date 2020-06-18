@@ -102,7 +102,7 @@ class Cartesian_control:
 	pi = math.pi
 	l_RCC = 0.4318
 	l_tool_original = 0.4162
-	l_tool = l_tool_original + 0.02
+	l_tool = l_tool_original + 0.04
 
 	T = np.zeros((4,4))
 

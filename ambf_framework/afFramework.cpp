@@ -2127,13 +2127,15 @@ void afRigidBody::updatePositionFromDynamics()
         q.fromRotMat(m_localRot);
         m_afObjectPtr->cur_orientation(q.x, q.y, q.z, q.w);
 
+        ///actually useless lines. Just an attempt with haptic device
+
         //extern float maF[3];
         //cVector3d maForce(0.0, 0.0, 0.0);
         //maForce.set(maF[0], maF[1], maF[2]);
         //m_afObjectPtr->cur_force(maForce.x(), maForce.y(), maForce.z());
 
-        ///Write force only on the force field relative to the topic of the topic of the toolgripper1link body and leave
-        ///untouched the other topics. To do this, the function getName() was created in the afFramework.h file. Same for torques
+        ///Write force obtained on the force field relative to the topic of the the main insertion link body and leave
+        ///the other topics untouched. To do this, the function getName() was created in the afFramework.h file. Same for torques
 
         /*if(getName() == "toolgripper1link")
         {
@@ -3890,7 +3892,6 @@ void afResistanceSensor::updateSensor(){
             if (m_useVariableCoeff){
                 coeffScale = F_n_w.length();
             }
-            cout << "\nCIAOOOOOOOOOOOOOOCIAO\n";
 
             if(m_contactPointsValid){
                 btVector3 P_aINw = T_aINw * toBTvec(m_bodyAContactPointLocal);
@@ -5562,26 +5563,6 @@ bool afMultiBody::loadMultiBody(std::string a_multibody_config_file, bool enable
         std::string rb_name = multiBodyRidigBodies[i].as<std::string>();
         YAML::Node rb_node = multiBodyNode[rb_name];
         if (rBodyPtr->loadRigidBody(&rb_node, rb_name, this)) {
-            /*if (rb_name == "BODY tool gripper1 link")
-            {
-                cout << "\nrBodyPtr_CUBE     " << rBodyPtr;
-                afRigidBodyPtr PointerB = rBodyPtr;
-                cout << "\nPointerB_CUBE     " << PointerB;
-                btRigidBody* boxPtr = PointerB->m_bulletRigidBody; //use afRigidBodyPtr instead of rBodyPtr
-                cout << "\nboxPtr_CUBE    " << boxPtr;
-                //m_bulletRigidBody->getTotalForce();
-                btVector3 F_CUBE = boxPtr->getTotalForce();
-                btScalar f1 = F_CUBE[0];
-                btScalar f2 = F_CUBE[1];
-                btScalar f3 = F_CUBE[2];
-                cout << "\nForceA   " << f1 << "     " << f2  << "     " << f3;
-                btQuaternion quat_CUBE = boxPtr->getOrientation();
-                btScalar q1 = quat_CUBE[0];
-                btScalar q2 = quat_CUBE[1];
-                btScalar q3 = quat_CUBE[2];
-                btScalar q4 = quat_CUBE[3];
-                cout << "\nQUATERNION_CUBE    " << q1 << "     " << q2 << "     " << q3 << "     " << q4;
-            }*/
             std::string remap_str = remapBodyName(rBodyPtr->getNamespace() + rb_name, m_afWorld->getAFRigidBodyMap());
             m_afWorld->addAFRigidBody(rBodyPtr, rBodyPtr->getNamespace() + rb_name + remap_str);
             m_afRigidBodyMapLocal[rBodyPtr->getNamespace() + rb_name] = rBodyPtr;
@@ -6010,6 +5991,8 @@ afMultiBody::~afMultiBody(){
     //        delete sIt->second;
     //    }
 }
+
+/// Functions used to import forces and torques from the simulator into this file
 
 void getForces(btVector3 forceA, btVector3 forceB){
     force_body_A = forceA;

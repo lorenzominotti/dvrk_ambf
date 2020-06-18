@@ -418,6 +418,7 @@ bool afPhysicalDevice::loadPhysicalDevice(YAML::Node *pd_node, std::string node_
             simDevice->m_softGrippingConstraints[sIdx] = 0;
         }
         
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	///Check if input device name contains char '.' (like in omega.7 case) and removes it to make available communication.
 	///Remember to include file for boost
@@ -426,7 +427,7 @@ bool afPhysicalDevice::loadPhysicalDevice(YAML::Node *pd_node, std::string node_
     {
         boost::erase_all(m_hInfo.m_modelName, ".");
     }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         std::string _modelName = '/' + m_hInfo.m_modelName;
         std::replace(_modelName.begin(), _modelName.end(), ' ', '_');
@@ -563,16 +564,6 @@ cVector3d ph_dev_pos(0.0, 0.0, 0.0);
 cVector3d afPhysicalDevice::measuredPos(){
     std::lock_guard<std::mutex> lock(m_mutex);
     m_hDevice->getPosition(m_pos);
-    //cout << "\n\nPos physical device     " << m_pos;
-
-    // Save physical device positions in a file physical_pos.txt, same as line 859
-    /*ofstream myfile ("pos_phy.txt", ios::app);
-        if (myfile.is_open())
-        {
-            myfile << m_pos << "\n";
-            
-        }
-        else cout << "Unable to open file";*/
     updateCursorPose();
     return m_pos;
 }
@@ -819,39 +810,14 @@ void afPhysicalDevice::applyWrench(cVector3d force, cVector3d torque){
     //cout << "\n\nmax " << ma[0];
     //cout << "\n\nmay " << ma[1];
     //cout << "\n\nmaz " << ma[2];
-    ///////////////////////////////////////////
     cVector3d maForce(0.0, 0.0, 0.0);
     maForce.set(maF[0], maF[1], maF[2]);
 
-    ///Remove comment from line below here to set haptic feedback to the device
+    ///Remove comment from line below here to set haptic feedback to the Omega.7 device
     //m_hDevice->setForceAndTorqueAndGripperForce(maForce, torque, 0.0);
     //cout << "\n\nForce to physical device     " << maForce;
-
-    // Save physical device positions in a file physical_pos.txt, same as below
-    /*ofstream myfile_nof ("Force_to_dev_no_filter.txt", ios::app);
-        if (myfile_nof.is_open())
-        {
-            myfile_nof << force << "\n";
-            
-        }
-        else cout << "Unable to open file";
-
-    ofstream myfile_f ("Force_to_dev_filter.txt", ios::app);
-        if (myfile_f.is_open())
-        {
-            myfile_f << maForce << "\n";
-            
-        }
-        else cout << "Unable to open file";
-    
-    ofstream myfile ("Force_to_dev.txt", ios::app);
-        if (myfile.is_open())
-        {
-            myfile << maForce << "\n";
-            
-        }
-        else cout << "Unable to open file";*/
-  //  cout << "\n\n maForce" << maForce;
+    ///Remove comment from line below to set haptic feedback to a generic device (it was already provided by AMBF)
+    //  cout << "\n\n maForce" << maForce;
     //m_hDevice->setForceAndTorqueAndGripperForce(force, torque, 0.0);
 }
 
@@ -890,18 +856,6 @@ void afSimulatedDevice::updateMeasuredPose(){
     std::lock_guard<std::mutex> lock(m_mutex);
     m_pos  = m_rootLink->getLocalPos();
     m_rot = m_rootLink->getLocalRot();
-    //cout << "\n\n\nSIM POS                 " << m_pos;
-    //cout << "\nSIM POS_WS    " << m_pos/WS;
-    //cout << "\nWORKSPACE_SCALE    " << WS;
-    //Create and save file with simulated positions in /home/coltrane/ambf/bin/lin-x86_64, same as in line 561
-    /*ofstream myfile ("pos_sim.txt", ios::app);
-        if (myfile.is_open())
-        {
-            //myfile << m_pos/WS << "\n";
-            myfile << m_pos << "\n";
-            
-        }
-        else cout << "Unable to open file";*/
 }
 
 ///

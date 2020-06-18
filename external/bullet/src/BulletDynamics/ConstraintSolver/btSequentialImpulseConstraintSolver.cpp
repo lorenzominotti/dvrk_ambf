@@ -1818,6 +1818,7 @@ void btSequentialImpulseConstraintSolver::writeBackContacts(int iBegin, int iEnd
 	}
 }
 
+/// Here is where forces and torques are computed in the joints.
 void btSequentialImpulseConstraintSolver::writeBackJoints(int iBegin, int iEnd, const btContactSolverInfo& infoGlobal)
 {
 	for (int j = iBegin; j < iEnd; j++)

@@ -145,7 +145,7 @@ template <typename T>
 ///
 T toRPY(YAML::Node* node);
 
-///Functions to enable force and torque on topic
+///Functions to bring forces and torques from ambf_simulator.cpp to afFramework.cpp
 void getForces(btVector3 forceA, btVector3 forceB);
 void getTorques(btVector3 torqueA, btVector3 torqueB);
 

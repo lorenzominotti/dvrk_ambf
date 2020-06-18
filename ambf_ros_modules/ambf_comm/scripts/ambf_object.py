@@ -217,12 +217,16 @@ class Object(WatchDog):
         else:
             return self._state.pose.orientation
 
+##############################################################################################################
+    
     def get_force(self):
         """
-        Get the force from object, in this case only from joint of toolgripper1link
+        Get the force from object
         """
         #return self._state.wrench.force.x,self._state.wrench.force.y,self._state.wrench.force.z
 	return self._state.wrench.force.z
+
+##############################################################################################################
 
     def get_force_command(self):
         """

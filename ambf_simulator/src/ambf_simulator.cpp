@@ -1476,60 +1476,30 @@ void updatePhysics(){
     while(g_simulationRunning)
     {
 
-    ///First of all we get the body into the if condition. This body should be one of the extremes of the robot and,
-    ///more importantly, should have one constraint only. In fact, from the rigid body we get the the constraint and from the
-    ///constraint we get forces and torques acting there, which are computed in the btSequentialImpulseConstraintSolver. Forces
-    /// and torques are then brought in this file
+    /// In this case, the new tip for the PSM has already been substituted to the tools.
+    /// First of all, pick the robot's rigid body of interest (the tool roll link in this case), the one which has the joint in which the
+    /// desired forces and torques are computed. From this rigid body, obtain the right constraint (which in this case is the first and
+    /// only one) and from such constraint get the forces and torques acting there, which are computed in the
+    /// btSequentialImpulseConstraintSolver.
 
         //cout <<"\nExisting Bodies in Map: " << g_afMultiBody->m_afRigidBodyMapLocal.size() << std::endl;
         afRigidBodyMap::iterator rbIt = g_afMultiBody->m_afRigidBodyMapLocal.begin();
         for (; rbIt != g_afMultiBody->m_afRigidBodyMapLocal.end() ; ++rbIt){
 
-
-            //cout << rbIt->first << std::endl;
-            /*if(rbIt->first == "/ambf/env/psm/BODY tool gripper1 link")
+            //if(rbIt->first == "/ambf/env/psm/BODY main insertion link")
+            if(rbIt->first == "/ambf/env/psm/BODY tool roll link")
             {
-                btRigidBody *bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/psm/BODY tool gripper1 link")->m_bulletRigidBody;
+                //btRigidBody *bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/psm/BODY main insertion link")->m_bulletRigidBody;
+                btRigidBody *bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/psm/BODY tool roll link")->m_bulletRigidBody;
                 int nC = bodyPtr->getNumConstraintRefs();
-                cout << nC << "\n";
-                if (nC == 1)
-                {
-                    btVector3 forceA;
-                    btVector3 forceB;
-                    btVector3 torqueA;
-                    btVector3 torqueB;
-                    for (int cIdx = 0; cIdx < nC; cIdx++) {
-                        bodyPtr->getConstraintRef(cIdx)->setJointFeedback(&jf);
-                        forceA = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedForceBodyA;
-                        forceB = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedForceBodyB;
-                        torqueA = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedTorqueBodyA;
-                        torqueB = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedTorqueBodyB;
-                        //cout << "\n\nFORCE_BODYA_SIM     " << forceA[0] << "    " << forceA[1] << "     " << forceA[2] << "\n";
-                        //cout << "\nFORCE_BODYB_SIM     " << forceB[0] << "    " << forceB[1] << "     " << forceB[2] << "\n\n\n";
-                        //cout << "\nTORQUE_BODYA_SIM     " << torqueA[0] << "    " << torqueA[1] << "     " << torqueA[2] << "\n";
-                        //cout << "\nTORQUE_BODYB_SIM     " << torqueB[0] << "    " << torqueB[1] << "     " << torqueB[2] << "\n";
-                    }
-                    //cout << "\n\nFORCE_BODYA     " << forceA[0] << "    " << forceA[1] << "     " << forceA[2] << "\n";
-                    //cout << "\nFORCE_BODYB     " << forceB[0] << "    " << forceB[1] << "     " << forceB[2] << "\n";
-                    getForces(forceA, forceB);
-                    getTorques(torqueA, torqueB);
-                }
-                //else{ cout << "\n\nERROR: number of constraints other than 1\n\n";}
-            }*/
-
-
-            if(rbIt->first == "/ambf/env/psm/BODY main insertion link")
-            {
-                btRigidBody *bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/psm/BODY main insertion link")->m_bulletRigidBody;
-                int nC = bodyPtr->getNumConstraintRefs();
-                //cout << nC << "\n";
+                //cout << nC << "\n"; //print number of constraints of the chosen body
                 //if (nC == 1)
                 //{
                 btVector3 forceA;
                 btVector3 forceB;
                 btVector3 torqueA;
                 btVector3 torqueB;
-                for (int cIdx = 1; cIdx < nC; cIdx++) {
+                for (int cIdx = 0; cIdx < nC; cIdx++) {
                     bodyPtr->getConstraintRef(cIdx)->setJointFeedback(&jf);
                     forceA = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedForceBodyA;
                     forceB = bodyPtr->getConstraintRef(cIdx)->getJointFeedback()->m_appliedForceBodyB;
@@ -1540,16 +1510,16 @@ void updatePhysics(){
                     //cout << "\nTORQUE_BODYA_SIM     " << torqueA[0] << "    " << torqueA[1] << "     " << torqueA[2] << "\n";
                     //cout << "\nTORQUE_BODYB_SIM     " << torqueB[0] << "    " << torqueB[1] << "     " << torqueB[2] << "\n";
                 }
-                //cout << "\n\nFORCE_BODYA     " << forceA[0] << "    " << forceA[1] << "     " << forceA[2] << "\n";
-                //cout << "\nFORCE_BODYB     " << forceB[0] << "    " << forceB[1] << "     " << forceB[2] << "\n";
-                getForces(forceA, forceB);
+
+                getForces(forceA, forceB);          //functions used to bring the obtained forces and torques into the afFramework.cpp file
                 getTorques(torqueA, torqueB);
-                //}
-                //else{ cout << "\n\nERROR: number of constraints other than 1\n\n";}
             }
         }
 
-    ///Comment the following if you don't want to use a device
+    /// Comment the following if you don't want to use a device. It's the same of before, but sensors have been added to the body of interest
+    /// belonging to the gripper in order to use the function "getParentBody()" to select that specific body. In fact, the gripper is seen as
+    /// a whole body and it is not possible to specify the name of a certain body composing the griper itself as it was done before. Then,
+    /// again, get the constraints and the forces and torques.
         /*
         if (!g_cmdOpts.devicesToLoad.empty())
         {
@@ -1578,36 +1548,7 @@ void updatePhysics(){
         */
 
         //-------------------------------------------------------------------------------------------------------------------------------------------
-    //TESTS
 
-                //btRigidBody* bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/BodyA")->m_bulletRigidBody;
-                /*btRigidBody* bodyPtr = g_afMultiBody->getAFRigidBodyLocal("/ambf/env/BodyA")->m_bulletRigidBody;
-                btQuaternion quat_body = bodyPtr->getOrientation();
-                btScalar q1_b = quat_body[0];
-                btScalar q2_b = quat_body[1];
-                btScalar q3_b = quat_body[2];
-                btScalar q4_b = quat_body[3];
-                cout << "\nQUATERNION_BODY    " << q1_b << "     " << q2_b << "     " << q3_b << "     " << q4_b << "\n";
-                btVector3 force_applied;
-                cout << "\nForce_APPLIED   " << force_applied[0] << "     " << force_applied[1]  << "     " << force_applied[2] << "     " << "\n";
-                force_applied.setValue(0, 0, 5.0);
-                bodyPtr->applyCentralForce(force_applied);
-                btVector3 Force_b = bodyPtr->getTotalForce();
-                cVector3d force_b(Force_b[0], Force_b[1], Force_b[2]);
-                cout << "\nForce_BODY1  " << force_b;
-                btScalar f1_b = Force_b[0];
-                btScalar f2_b = Force_b[1];
-                btScalar f3_b = Force_b[2];
-                cout << "\nForce_BODY   " << f1_b << "     " << f2_b  << "     " << f3_b << "     " << "\n";
-                cVector3d Force_g = g_bulletWorld->getGravity();
-                btVector3 vel_lin_b = bodyPtr->getLinearVelocity();
-                btScalar v1_b = vel_lin_b[0];
-                btScalar v2_b = vel_lin_b[1];
-                btScalar v3_b = vel_lin_b[2];
-                cout << "\nVelocity_BODY   " << v1_b << "     " << v2_b  << "     " << v3_b << "     " << "\n";
-                cout << "\nForce_GRAVITY   " << Force_g << "\n\n";*/
-            //}
-          //}
 
         if (!g_afWorld->isPhysicsPaused()){
             g_freqCounterHaptics.signal(1);
@@ -1641,7 +1582,6 @@ void updatePhysics(){
                 afPhysicalDevice * phyDev = g_inputDevices->m_psDevicePairs[devIdx].m_physicalDevice;
                 afRigidBodyPtr rootLink = simDev->m_rootLink;
                 simDev->updateMeasuredPose();
-                //cout << "\nCHECKPOINT   1111111111111";
 
                 if (g_enableGrippingAssist){
                     for (int sIdx = 0 ; sIdx < rootLink->getAFSensors().size() ; sIdx++){
@@ -1653,32 +1593,9 @@ void updatePhysics(){
                                     if (!simDev->m_rigidGrippingConstraints[sIdx]){
                                         btRigidBody* bodyAPtr = proximitySensorPtr->getParentBody()->m_bulletRigidBody;
                                         btRigidBody* bodyBPtr = proximitySensorPtr->getSensedRigidBody();
-                                        afRigidBodyPtr rbodyAA = proximitySensorPtr->getParentBody();
-                                        //cout << "\nrigidbodyAA      " << rbodyAA;
-                                        //cout << "\nCHECKPOINT   22222222222222";
-                                        //cout << "\nbodyAPtr    " << bodyAPtr;
-                                        btVector3 ForceA = bodyAPtr->getTotalForce();
-                                        btScalar f1 = ForceA[0];
-                                        btScalar f2 = ForceA[1];
-                                        btScalar f3 = ForceA[2];
-                                        //cout << "\nForceA   " << f1 << "     " << f2  << "     " << f3;
-                                        btQuaternion quat = bodyAPtr->getOrientation();
-                                        btScalar q1 = quat[0];
-                                        btScalar q2 = quat[1];
-                                        btScalar q3 = quat[2];
-                                        btScalar q4 = quat[3];
-                                        //cout << "\nQUATERNION    " << q1 << "     " << q2 << "     " << q3 << "     " << q4;
-                                        btQuaternion quat_norm = quat.normalize();
-                                        //cout << "\nQUAT_NORM     " << *quat_norm;
-                                        cVector3d hitPointInWorld = proximitySensorPtr->getSensedPoint();
-                                        //cout << "\nPOINT_SENSED_HIT    " << hitPointInWorld;
-                                        btVector3 pvtA = bodyAPtr->getCenterOfMassTransform().inverse() * toBTvec(hitPointInWorld);
-                                        //cout << "\nPVTA    " << * pvtA;
-                                        proximitySensorPtr->updateSensor();
                                         if (!rootLink->isChild(bodyBPtr)){
                                             cVector3d hitPointInWorld = proximitySensorPtr->getSensedPoint();
                                             btVector3 pvtA = bodyAPtr->getCenterOfMassTransform().inverse() * toBTvec(hitPointInWorld);
-                                            //cout << "\nCHECKPOINT   33333333333";
                                             btVector3 pvtB = bodyBPtr->getCenterOfMassTransform().inverse() * toBTvec(hitPointInWorld);
                                             simDev->m_rigidGrippingConstraints[sIdx] = new btPoint2PointConstraint(*bodyAPtr, *bodyBPtr, pvtA, pvtB);
                                             simDev->m_rigidGrippingConstraints[sIdx]->m_setting.m_impulseClamp = 3.0;
@@ -1770,7 +1687,6 @@ void updatePhysics(){
                 double ts = dt_fixed / dt;
                 force = phyDev->m_controller.computeOutput<cVector3d>(simDev->m_pos, simDev->getPosRef(), dt, 1);
                 force = simDev->P_lc_ramp * force;
-                //cout << "\n\n FORCE: " << force;
 
                 torque = phyDev->m_controller.computeOutput<cVector3d>(simDev->m_rot, simDev->getRotRef(), dt, 1);
                 simDev->applyForce(force);
@@ -1798,21 +1714,7 @@ void updatePhysics(){
                     simDev->P_ac_ramp = 1.0;
                 }
             }
-            //cVector3d force1, torque1;
-            // ts is to prevent the saturation of forces
-            //double ts = dt_fixed / dt;
-            //force1 = afCartesianController::computeOutput<cVector3d>(m_pos, ->getPosRef(), dt, 1);
-            //force1 = btRigidBody->P_lc_ramp * force1;
-            //cout << "\n\n FORCE1: " << force1;
-
             g_bulletWorld->updateDynamics(dt, g_clockWorld.getCurrentTimeSeconds(), g_freqCounterHaptics.getFrequency(), g_inputDevices->m_numDevices);
-            //g_bulletWorld->m_bulletWorld->
-
-            //virtual btScalar solveGroupCacheFriendlyFinish(btCollisionObject * *bodies, int numBodies, const btContactSolverInfo& infoGlobal);
-
-            //void writeBackJoints(0, m_tmpSolverNonContactConstraintPool.size(), infoGlobal); //int iBegin, int iEnd, const btContactSolverInfo& infoGlobal
-
-
         }
             rateSleep.sleep();
     }
@@ -2060,8 +1962,6 @@ void updateHapticDevice(void* a_arg){
                 force.normalize();
                 force = force * phyDev->m_maxForce;
             }
- //           cout << '\n' << "forceX" << '\n' << force.x() << '\n'; 
-//            cout << '\n' << "device" << '\n' << phyDev << '\n';
 
             if (torque.length() < phyDev->m_deadBand){
                 torque.set(0,0,0);

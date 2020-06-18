@@ -100,7 +100,7 @@ class Cartesian_control:
 	pi = math.pi
 	l_RCC = 0.4318
 	l_tool_original = 0.4162
-	l_tool = 0.02 + l_tool_original
+	l_tool = 0.04 + l_tool_original
 
 	#Kp_start = 0.000001
 	#Ki_start = 0.000001
